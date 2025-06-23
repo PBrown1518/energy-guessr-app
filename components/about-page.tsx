@@ -14,19 +14,15 @@ export default function AboutPage({ onBack }: AboutPageProps) {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <Button variant="ghost" onClick={onBack} className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Game
+          <Button variant="ghost" onClick={onBack} className="p-3">
+            <ArrowLeft className="h-10 w-10" />
           </Button>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-r from-blue-500 to-green-500 rounded-full">
-              <Zap className="h-6 w-6 text-white" />
+          <div className="flex items-center justify-center gap-3">
+            <div className="p-3 bg-gradient-to-r from-blue-500 to-green-500 rounded-full">
+              <Zap className="h-7 w-7 text-white" />
             </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-              About EnergyGuessr
-            </h1>
           </div>
-          <div className="w-20" /> {/* Spacer for centering */}
+          <div className="w-14"></div> {/* Spacer for centering */}
         </div>
 
         <div className="space-y-8">

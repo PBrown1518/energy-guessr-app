@@ -852,27 +852,27 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
           </div>
 
           {/* Mobile Layout */}
-          <div className="md:hidden space-y-4">
+          <div className="md:hidden space-y-4 px-4">
             {/* Top row: Back button and Logo */}
             <div className="flex items-center justify-between">
-              <Button variant="ghost" onClick={onBackToWelcome} className="p-2">
-                <ArrowLeft className="h-5 w-5" />
+              <Button variant="ghost" onClick={onBackToWelcome} className="p-3">
+                <ArrowLeft className="h-10 w-10" />
               </Button>
               <div className="flex items-center justify-center gap-3">
-                <div className="p-2 bg-gradient-to-r from-blue-500 to-green-500 rounded-full">
-                  <Zap className="h-6 w-6 text-white" />
+                <div className="p-3 bg-gradient-to-r from-blue-500 to-green-500 rounded-full">
+                  <Zap className="h-7 w-7 text-white" />
                 </div>
               </div>
-              <div className="w-10"></div> {/* Spacer for centering */}
+              <div className="w-14"></div> {/* Spacer for centering */}
             </div>
             
             {/* Bottom row: Round indicator and Progress bar */}
             <div className="flex items-center justify-between">
-              <div className="text-sm font-medium text-foreground">
+              <div className="text-base font-medium text-foreground">
                 Round {currentRound + 1} of 5
               </div>
-              <div className="flex-1 ml-4">
-                <Progress value={progress} className="h-2" />
+              <div className="flex-1 ml-6">
+                <Progress value={progress} className="h-3" />
               </div>
             </div>
           </div>

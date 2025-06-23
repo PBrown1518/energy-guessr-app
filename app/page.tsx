@@ -51,10 +51,10 @@ export default function EnergyGuessr() {
       <div className="w-full max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="p-3 bg-gradient-to-r from-blue-500 to-green-500 rounded-full">
-              <Zap className="h-8 w-8 text-white" />
+            <div className="p-2 bg-gradient-to-r from-blue-500 to-green-500 rounded-full">
+              <Zap className="h-6 w-6 text-white" />
             </div>
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent leading-tight pb-1">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent leading-tight pb-1">
               EnergyGuessr
             </h1>
           </div>
