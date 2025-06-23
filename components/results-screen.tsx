@@ -17,6 +17,8 @@ export default function ResultsScreen({ results, onPlayAgain, onBackToWelcome }:
   const totalCorrect = results.reduce((sum, result) => sum + (result.isCorrect ? 1 : 0), 0)
   const totalRounds = results.length
   const totalPossible = totalRounds
+  const totalGraphsViewed = results.reduce((sum, result) => sum + (result.chartsViewed || 0), 0)
+  const overallAccuracy = Math.round((totalCorrect / totalPossible) * 100)
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-green-600"
@@ -107,22 +109,14 @@ export default function ResultsScreen({ results, onPlayAgain, onBackToWelcome }:
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 gap-6">
               <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-3xl font-bold text-blue-600 mb-2">{Math.max(...results.map((r) => r.score))}%</div>
-                <p className="text-sm text-blue-800 font-medium">Best Round</p>
+                <div className="text-3xl font-bold text-blue-600 mb-2">{totalGraphsViewed}</div>
+                <p className="text-sm text-blue-800 font-medium">Total Charts Viewed</p>
               </div>
               <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-3xl font-bold text-green-600 mb-2">
-                  {results.filter((r) => r.score >= 70).length}/5
-                </div>
-                <p className="text-sm text-green-800 font-medium">Rounds ≥70%</p>
-              </div>
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <div className="text-3xl font-bold text-purple-600 mb-2">
-                  {Math.round((totalCorrect / totalPossible) * 100)}%
-                </div>
-                <p className="text-sm text-purple-800 font-medium">Overall Accuracy</p>
+                <div className="text-3xl font-bold text-green-600 mb-2">{overallAccuracy}%</div>
+                <p className="text-sm text-green-800 font-medium">Overall Accuracy</p>
               </div>
             </div>
           </CardContent>
