@@ -89,6 +89,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
   const [openAccordion, setOpenAccordion] = useState<string>("consumption")
   const [isLoading, setIsLoading] = useState(true)
   const [energyData, setEnergyData] = useState<{ [countryCode: string]: CombinedEnergyData } | null>(null)
+  const [showFireworks, setShowFireworks] = useState(false)
 
   useEffect(() => {
     // Load energy data on component mount
@@ -237,8 +238,22 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
 
   const consumptionData = createConsumptionChartData(currentEnergyData.consumption)
   const productionData = createProductionChartData(currentEnergyData.production)
-  const importsExportsData: Array<{ year: number; value: number }> = []
-  const timeSeriesData: Array<{ year: number; [key: string]: number }> = []
+  const importsExportsData = currentEnergyData.trade.map(item => ({
+    year: item.year,
+    value: item.importPercentage
+  }))
+  const timeSeriesData = currentEnergyData.timeSeries.map(item => ({
+    year: item.year,
+    oil: item.oil,
+    coal: item.coal,
+    gas: item.gas,
+    nuclear: item.nuclear,
+    hydro: item.hydro,
+    wind: item.wind,
+    solar: item.solar,
+    biofuels: item.biofuels,
+    other_renewables: item.other_renewables
+  }))
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 pt-8">
@@ -465,7 +480,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                   >
                     <div className="flex items-center gap-2">
                       <TrendingUp className="h-5 w-5" />
-                      Is this country an energy importer or exporter?
+                      Is this country an energy importer (-) or exporter (+)?
                       <Tooltip>
                         <TooltipTrigger>
                           <Info className="h-4 w-4 text-muted-foreground" />
@@ -482,9 +497,13 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                   <AccordionContent>
                     <div className="h-80">
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={importsExportsData} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
+                        <LineChart data={importsExportsData} margin={{ top: 10, right: 10, left: 15, bottom: 5 }}>
                           <XAxis dataKey="year" />
-                          <YAxis label={{ value: "Net Exports (% of energy use)", angle: -90, position: "insideLeft" }} />
+                          <YAxis 
+                            label={{ value: "Energy Trade %", angle: -90, position: "center", dx:-30 }}
+                            domain={[-100, 100]}
+                            tickFormatter={(value) => `${value >= 0 ? '+' : ''}${value}%`}
+                          />
                           <ChartTooltip
                             content={({ active, payload }) => {
                               if (active && payload && payload[0]) {
@@ -550,15 +569,16 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                               return null
                             }}
                           />
-                          <Area type="monotone" dataKey="oil" stackId="1" stroke="#8B4513" fill="#8B4513" />
-                          <Area type="monotone" dataKey="gas" stackId="1" stroke="#FF6347" fill="#FF6347" />
-                          <Area type="monotone" dataKey="coal" stackId="1" stroke="#2F4F4F" fill="#2F4F4F" />
-                          <Area type="monotone" dataKey="nuclear" stackId="1" stroke="#FFD700" fill="#FFD700" />
-                          <Area type="monotone" dataKey="hydro" stackId="1" stroke="#4169E1" fill="#4169E1" />
-                          <Area type="monotone" dataKey="wind" stackId="1" stroke="#87CEEB" fill="#87CEEB" />
-                          <Area type="monotone" dataKey="solar" stackId="1" stroke="#FFA500" fill="#FFA500" />
-                          <Area type="monotone" dataKey="biofuels" stackId="1" stroke="#228B22" fill="#228B22" />
-                          <Area type="monotone" dataKey="other_renewables" stackId="1" stroke="#32CD32" fill="#32CD32" />
+                          <Legend />
+                          <Area type="monotone" dataKey="oil" stackId="1" stroke="#8B4513" fill="#8B4513" name="Oil" />
+                          <Area type="monotone" dataKey="gas" stackId="1" stroke="#FF6347" fill="#FF6347" name="Gas" />
+                          <Area type="monotone" dataKey="coal" stackId="1" stroke="#2F4F4F" fill="#2F4F4F" name="Coal" />
+                          <Area type="monotone" dataKey="nuclear" stackId="1" stroke="#FFD700" fill="#FFD700" name="Nuclear" />
+                          <Area type="monotone" dataKey="hydro" stackId="1" stroke="#4169E1" fill="#4169E1" name="Hydro" />
+                          <Area type="monotone" dataKey="wind" stackId="1" stroke="#87CEEB" fill="#87CEEB" name="Wind" />
+                          <Area type="monotone" dataKey="solar" stackId="1" stroke="#FFA500" fill="#FFA500" name="Solar" />
+                          <Area type="monotone" dataKey="biofuels" stackId="1" stroke="#228B22" fill="#228B22" name="Biofuels" />
+                          <Area type="monotone" dataKey="other_renewables" stackId="1" stroke="#32CD32" fill="#32CD32" name="Other Renewables" />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>

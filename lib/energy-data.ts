@@ -29,9 +29,33 @@ export interface ElectricityProductionData {
   other: number
 }
 
+export interface EnergyTradeData {
+  country: string
+  code: string
+  year: number
+  importPercentage: number
+}
+
+export interface EnergyTimeSeriesData {
+  country: string
+  code: string
+  year: number
+  oil: number
+  coal: number
+  gas: number
+  nuclear: number
+  hydro: number
+  wind: number
+  solar: number
+  biofuels: number
+  other_renewables: number
+}
+
 export interface CombinedEnergyData {
   consumption: EnergyConsumptionData
   production: ElectricityProductionData
+  trade: EnergyTradeData[]
+  timeSeries: EnergyTimeSeriesData[]
 }
 
 // List of countries supported in the game
@@ -137,7 +161,7 @@ export async function fetchEnergyConsumptionData(): Promise<{ [countryCode: stri
     if (!response.ok) {
       throw new Error(`Failed to fetch energy consumption data: ${response.status}`)
     }
-
+    
     const csvText = await response.text()
     const lines = csvText.split('\n')
     const headers = lines[0].split(',')
@@ -192,7 +216,7 @@ export async function fetchEnergyConsumptionData(): Promise<{ [countryCode: stri
         other_renewables: parseValue(columnIndices.other_renewables)
       }
     }
-
+    
     return processedData
   } catch (error) {
     console.error('Error fetching energy consumption data:', error)
@@ -215,7 +239,7 @@ export async function fetchElectricityProductionData(): Promise<{ [countryCode: 
     if (!response.ok) {
       throw new Error(`Failed to fetch electricity production data: ${response.status}`)
     }
-
+    
     const csvText = await response.text()
     const lines = csvText.split('\n')
     const headers = lines[0].split(',')
@@ -270,7 +294,7 @@ export async function fetchElectricityProductionData(): Promise<{ [countryCode: 
         other: parseValue(columnIndices.other)
       }
     }
-
+    
     return processedData
   } catch (error) {
     console.error('Error fetching electricity production data:', error)
@@ -281,24 +305,28 @@ export async function fetchElectricityProductionData(): Promise<{ [countryCode: 
 // Fetch both energy consumption and electricity production data
 export async function fetchAllEnergyData(): Promise<{ [countryCode: string]: CombinedEnergyData }> {
   try {
-    const [consumptionData, productionData] = await Promise.all([
+    // Fetch all data in parallel
+    const [consumptionData, productionData, tradeData, timeSeriesData] = await Promise.all([
       fetchEnergyConsumptionData(),
-      fetchElectricityProductionData()
+      fetchElectricityProductionData(),
+      fetchEnergyTradeData(),
+      fetchEnergyTimeSeriesData()
     ])
 
     // Combine the data
     const combinedData: { [countryCode: string]: CombinedEnergyData } = {}
     
-    // Only include countries that have both consumption and production data
     for (const countryCode of SUPPORTED_COUNTRIES) {
       if (consumptionData[countryCode] && productionData[countryCode]) {
         combinedData[countryCode] = {
           consumption: consumptionData[countryCode],
-          production: productionData[countryCode]
+          production: productionData[countryCode],
+          trade: tradeData[countryCode] || [],
+          timeSeries: timeSeriesData[countryCode] || []
         }
       }
     }
-
+    
     return combinedData
   } catch (error) {
     console.error('Error fetching combined energy data:', error)
@@ -306,7 +334,7 @@ export async function fetchAllEnergyData(): Promise<{ [countryCode: string]: Com
   }
 }
 
-// Cache the data to avoid repeated API calls
+// Cache for energy data
 let cachedData: { [countryCode: string]: CombinedEnergyData } | null = null
 let cacheTimestamp: number = 0
 const CACHE_DURATION = 24 * 60 * 60 * 1000 // 24 hours
@@ -327,4 +355,157 @@ export async function getEnergyData(): Promise<{ [countryCode: string]: Combined
   cacheTimestamp = now
   
   return data
+}
+
+export async function fetchEnergyTradeData(): Promise<{ [countryCode: string]: EnergyTradeData[] }> {
+  try {
+    const response = await fetch(
+      'https://ourworldindata.org/grapher/energy-imports-and-exports-energy-use.csv?v=1&csvType=full&useColumnShortNames=true',
+      {
+        headers: {
+          'User-Agent': 'Our World In Data data fetch/1.0'
+        }
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch energy trade data: ${response.status}`)
+    }
+    
+    const csvText = await response.text()
+    const lines = csvText.split('\n')
+    const headers = lines[0].split(',')
+    
+    // Find column indices
+    const columnIndices = {
+      entity: headers.findIndex(h => h === 'Entity'),
+      code: headers.findIndex(h => h === 'Code'),
+      year: headers.findIndex(h => h === 'Year'),
+      importPercentage: headers.findIndex(h => h === 'eg_imp_cons_zs')
+    }
+
+    // Process CSV data
+    const processedData: { [countryCode: string]: EnergyTradeData[] } = {}
+    
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].split(',')
+      if (line.length < headers.length) continue
+
+      const countryCode = line[columnIndices.code]
+      const year = parseInt(line[columnIndices.year])
+      const importPercentage = parseFloat(line[columnIndices.importPercentage])
+
+      // Only process supported countries and valid data
+      if (!SUPPORTED_COUNTRIES.includes(countryCode) || isNaN(year) || isNaN(importPercentage)) continue
+
+      // Initialize array for country if it doesn't exist
+      if (!processedData[countryCode]) {
+        processedData[countryCode] = []
+      }
+
+      processedData[countryCode].push({
+        country: line[columnIndices.entity],
+        code: countryCode,
+        year: year,
+        importPercentage: importPercentage
+      })
+    }
+    
+    // Sort each country's data by year
+    for (const countryCode in processedData) {
+      processedData[countryCode].sort((a, b) => a.year - b.year)
+    }
+    
+    return processedData
+  } catch (error) {
+    console.error('Error fetching energy trade data:', error)
+    throw error
+  }
+}
+
+export async function fetchEnergyTimeSeriesData(): Promise<{ [countryCode: string]: EnergyTimeSeriesData[] }> {
+  try {
+    const response = await fetch(
+      'https://ourworldindata.org/grapher/energy-consumption-by-source-and-country.csv?v=1&csvType=full&useColumnShortNames=true',
+      {
+        headers: {
+          'User-Agent': 'Our World In Data data fetch/1.0'
+        }
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch energy time series data: ${response.status}`)
+    }
+    
+    const csvText = await response.text()
+    const lines = csvText.split('\n')
+    const headers = lines[0].split(',')
+    
+    // Find column indices
+    const columnIndices = {
+      entity: headers.findIndex(h => h === 'Entity'),
+      code: headers.findIndex(h => h === 'Code'),
+      year: headers.findIndex(h => h === 'Year'),
+      oil: headers.findIndex(h => h === 'oil_consumption_twh'),
+      coal: headers.findIndex(h => h === 'coal_consumption_twh'),
+      gas: headers.findIndex(h => h === 'gas_consumption_twh'),
+      nuclear: headers.findIndex(h => h === 'nuclear_consumption_equivalent_twh'),
+      hydro: headers.findIndex(h => h === 'hydro_consumption_equivalent_twh'),
+      wind: headers.findIndex(h => h === 'wind_consumption_equivalent_twh'),
+      solar: headers.findIndex(h => h === 'solar_consumption_equivalent_twh'),
+      biofuels: headers.findIndex(h => h === 'biofuels_consumption_twh'),
+      other_renewables: headers.findIndex(h => h === 'other_renewables_consumption_equivalent_twh')
+    }
+
+    // Process CSV data
+    const processedData: { [countryCode: string]: EnergyTimeSeriesData[] } = {}
+    
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].split(',')
+      if (line.length < headers.length) continue
+
+      const countryCode = line[columnIndices.code]
+      const year = parseInt(line[columnIndices.year])
+
+      // Only process supported countries
+      if (!SUPPORTED_COUNTRIES.includes(countryCode) || isNaN(year)) continue
+
+      // Parse numeric values, defaulting to 0 if not available
+      const parseValue = (index: number) => {
+        const value = line[index]
+        return value && value !== '' ? parseFloat(value) : 0
+      }
+
+      // Initialize array for country if it doesn't exist
+      if (!processedData[countryCode]) {
+        processedData[countryCode] = []
+      }
+
+      processedData[countryCode].push({
+        country: line[columnIndices.entity],
+        code: countryCode,
+        year: year,
+        oil: parseValue(columnIndices.oil),
+        coal: parseValue(columnIndices.coal),
+        gas: parseValue(columnIndices.gas),
+        nuclear: parseValue(columnIndices.nuclear),
+        hydro: parseValue(columnIndices.hydro),
+        wind: parseValue(columnIndices.wind),
+        solar: parseValue(columnIndices.solar),
+        biofuels: parseValue(columnIndices.biofuels),
+        other_renewables: parseValue(columnIndices.other_renewables)
+      })
+    }
+    
+    // Sort each country's data by year
+    for (const countryCode in processedData) {
+      processedData[countryCode].sort((a, b) => a.year - b.year)
+    }
+    
+    return processedData
+  } catch (error) {
+    console.error('Error fetching energy time series data:', error)
+    throw error
+  }
 } 
