@@ -14,6 +14,10 @@ interface GameResult {
   isCorrect: boolean
   points: number
   chartsViewed: number
+  playerGuess: string
+  playerGuessFlag: string
+  correctAnswer: string
+  correctAnswerFlag: string
 }
 
 export default function EnergyGuessr() {

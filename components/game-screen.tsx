@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -90,8 +90,8 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
   const [openAccordion, setOpenAccordion] = useState<string>("consumption")
   const [isLoading, setIsLoading] = useState(true)
   const [energyData, setEnergyData] = useState<{ [countryCode: string]: CombinedEnergyData } | null>(null)
-  const [showFireworks, setShowFireworks] = useState(false)
   const [usedCorrectCountries, setUsedCorrectCountries] = useState<Set<string>>(new Set())
+  const [isGuessing, setIsGuessing] = useState(false)
 
   useEffect(() => {
     // Load energy data on component mount
@@ -110,13 +110,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
     loadEnergyData()
   }, [])
 
-  useEffect(() => {
-    if (!isLoading && energyData) {
-      startNewRound()
-    }
-  }, [isLoading, energyData])
-
-  const startNewRound = () => {
+  const startNewRound = useCallback(() => {
     if (!energyData) return
 
     // Get available countries (those with data) and exclude previously used correct countries
@@ -155,7 +149,13 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
     setVisibleCharts(1)
     setSelectedCountry(null)
     setOpenAccordion("consumption")
-  }
+  }, [energyData, usedCorrectCountries])
+
+  useEffect(() => {
+    if (!isLoading && energyData) {
+      startNewRound()
+    }
+  }, [isLoading, energyData, startNewRound])
 
   const handleRevealNext = () => {
     if (visibleCharts < 4) {
@@ -179,8 +179,10 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
     }
   }
 
-  const handleGuess = () => {
-    if (!selectedCountry || !correctCountry) return
+  const handleGuess = async () => {
+    if (!selectedCountry || !correctCountry || isGuessing) return
+
+    setIsGuessing(true)
 
     const isCorrect = selectedCountry === correctCountry.code
     const pointsArray = [100, 75, 50, 25]
@@ -202,15 +204,25 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
     }
 
     const newResults = [...gameResults, roundResult]
-    setGameResults(newResults)
 
     // Add the current correct country to the used countries set
-    setUsedCorrectCountries(prev => new Set([...prev, correctCountry.code]))
+    const newUsedCountries = new Set([...usedCorrectCountries, correctCountry.code])
+
+    // Wait a moment to show the loading state, then update everything together
+    await new Promise(resolve => setTimeout(resolve, 800))
 
     if (currentRound < 4) {
+      // Update all state simultaneously
+      setGameResults(newResults)
+      setUsedCorrectCountries(newUsedCountries)
       setCurrentRound(currentRound + 1)
-      setTimeout(startNewRound, 1000)
+      setIsGuessing(false)
+      startNewRound()
     } else {
+      // Game complete
+      setGameResults(newResults)
+      setUsedCorrectCountries(newUsedCountries)
+      setIsGuessing(false)
       onGameComplete(newResults)
     }
   }
@@ -410,11 +422,20 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
               )}
               <Button
                 onClick={handleGuess}
-                disabled={!selectedCountry}
+                disabled={!selectedCountry || isGuessing}
                 className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white"
               >
-                <CheckCircle className="mr-2 h-4 w-4" />
-                Make Guess ({[100, 75, 50, 25][visibleCharts - 1]} points if correct)
+                {isGuessing ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Make Guess ({[100, 75, 50, 25][visibleCharts - 1]} points if correct)
+                  </>
+                )}
               </Button>
             </div>
           </div>
@@ -594,7 +615,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                   >
                     <div className="flex items-center gap-2">
                       <Clock className="h-5 w-5" />
-                      How has this country's energy mix evolved over time?
+                      How has this country&apos;s energy mix evolved over time?
                       <Tooltip>
                         <TooltipTrigger>
                           <Info className="h-4 w-4 text-muted-foreground" />
@@ -662,11 +683,20 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
             )}
             <Button
               onClick={handleGuess}
-              disabled={!selectedCountry}
+              disabled={!selectedCountry || isGuessing}
               className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white"
             >
-              <CheckCircle className="mr-2 h-4 w-4" />
-              Make Guess ({[100, 75, 50, 25][visibleCharts - 1]} points if correct)
+              {isGuessing ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Make Guess ({[100, 75, 50, 25][visibleCharts - 1]} points if correct)
+                </>
+              )}
             </Button>
           </div>
         </div>
