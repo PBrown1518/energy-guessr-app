@@ -22,7 +22,7 @@ import {
 } from "recharts"
 import { ChartTooltip } from "@/components/ui/chart"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { getEnergyData, EnergyConsumptionData, SUPPORTED_COUNTRIES, COUNTRY_NAMES } from "@/lib/energy-data"
+import { getEnergyData, CombinedEnergyData, EnergyConsumptionData, ElectricityProductionData, SUPPORTED_COUNTRIES, COUNTRY_NAMES } from "@/lib/energy-data"
 
 interface GameScreenProps {
   onGameComplete: (results: GameResult[]) => void
@@ -56,6 +56,7 @@ const COUNTRY_FLAGS: { [key: string]: string } = {
 }
 
 const energyColors: { [key: string]: string } = {
+  // Energy consumption colors
   oil: "#8B4513",
   coal: "#2F4F4F",
   gas: "#FF6347",
@@ -65,6 +66,9 @@ const energyColors: { [key: string]: string } = {
   solar: "#FFA500",
   biofuels: "#228B22",
   other_renewables: "#32CD32",
+  // Electricity production colors (matching where possible)
+  bioenergy: "#228B22", // Same as biofuels
+  other: "#32CD32", // Same as other_renewables
 }
 
 // Create country options from supported countries
@@ -78,13 +82,13 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
   const [currentRound, setCurrentRound] = useState(0)
   const [currentCountryOptions, setCurrentCountryOptions] = useState<CountryOption[]>([])
   const [correctCountry, setCorrectCountry] = useState<CountryOption | null>(null)
-  const [currentEnergyData, setCurrentEnergyData] = useState<EnergyConsumptionData | null>(null)
+  const [currentEnergyData, setCurrentEnergyData] = useState<CombinedEnergyData | null>(null)
   const [visibleCharts, setVisibleCharts] = useState(1)
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
   const [gameResults, setGameResults] = useState<GameResult[]>([])
   const [openAccordion, setOpenAccordion] = useState<string>("consumption")
   const [isLoading, setIsLoading] = useState(true)
-  const [energyData, setEnergyData] = useState<{ [countryCode: string]: EnergyConsumptionData } | null>(null)
+  const [energyData, setEnergyData] = useState<{ [countryCode: string]: CombinedEnergyData } | null>(null)
 
   useEffect(() => {
     // Load energy data on component mount
@@ -178,7 +182,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
     }
   }
 
-  const createBarChartData = (data: EnergyConsumptionData) => {
+  const createConsumptionChartData = (data: EnergyConsumptionData) => {
     return [
       { name: 'Oil', value: data.oil, fill: energyColors.oil },
       { name: 'Coal', value: data.coal, fill: energyColors.coal },
@@ -189,6 +193,20 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
       { name: 'Solar', value: data.solar, fill: energyColors.solar },
       { name: 'Biofuels', value: data.biofuels, fill: energyColors.biofuels },
       { name: 'Other', value: data.other_renewables, fill: energyColors.other_renewables }
+    ]
+  }
+
+  const createProductionChartData = (data: ElectricityProductionData) => {
+    return [
+      { name: 'Coal', value: data.coal, fill: energyColors.coal },
+      { name: 'Gas', value: data.gas, fill: energyColors.gas },
+      { name: 'Oil', value: data.oil, fill: energyColors.oil },
+      { name: 'Nuclear', value: data.nuclear, fill: energyColors.nuclear },
+      { name: 'Hydro', value: data.hydro, fill: energyColors.hydro },
+      { name: 'Wind', value: data.wind, fill: energyColors.wind },
+      { name: 'Solar', value: data.solar, fill: energyColors.solar },
+      { name: 'Bioenergy', value: data.bioenergy, fill: energyColors.bioenergy },
+      { name: 'Other', value: data.other, fill: energyColors.other }
     ]
   }
 
@@ -217,8 +235,8 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
     )
   }
 
-  const consumptionData = createBarChartData(currentEnergyData)
-  const productionData = createBarChartData(currentEnergyData)
+  const consumptionData = createConsumptionChartData(currentEnergyData.consumption)
+  const productionData = createProductionChartData(currentEnergyData.production)
   const importsExportsData: Array<{ year: number; value: number }> = []
   const timeSeriesData: Array<{ year: number; [key: string]: number }> = []
 
@@ -344,16 +362,16 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                   >
                     <div className="flex items-center gap-2">
                       <BarChart3 className="h-5 w-5" />
-                      Energy consumption by source for 2023
+                      What fuels this country?
                       <Tooltip>
                         <TooltipTrigger>
                           <Info className="h-4 w-4 text-muted-foreground" />
                         </TooltipTrigger>
                         <TooltipContent className="max-w-sm">
                           <p className="text-xs">
-                            Measured in terms of primary energy using the substitution method. Data source: Energy
-                            Institute - Statistical Review of World Energy (2024). Note: &quot;Other renewables&quot; include
-                            geothermal, biomass, and waste energy. OurWorldinData.org/energy | CC BY
+                            This shows the breakdown of primary energy consumption by source for 2023. Data source: Energy
+                            Institute - Statistical Review of World Energy (2024). Note: 2023 data is used due to availability.
+                            OurWorldinData.org/energy | CC BY
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -362,7 +380,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                   <AccordionContent>
                     <div className="h-80">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={consumptionData} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
+                        <BarChart data={consumptionData} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
                           <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={60} />
                           <YAxis type="number" label={{ value: "TWh", angle: -90, position: "insideLeft" }} />
                           <ChartTooltip
@@ -388,7 +406,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                   </AccordionContent>
                 </AccordionItem>
 
-                {/* Electricity Production 2023 */}
+                {/* Electricity Production 2024 */}
                 <AccordionItem value="production">
                   <AccordionTrigger
                     className={`${visibleCharts >= 2 ? "" : "opacity-50 pointer-events-none"}`}
@@ -396,16 +414,15 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                   >
                     <div className="flex items-center gap-2">
                       <Zap className="h-5 w-5" />
-                      Electricity production by source for 2023
+                      How does this country generate electricity (including what it exports)?
                       <Tooltip>
                         <TooltipTrigger>
                           <Info className="h-4 w-4 text-muted-foreground" />
                         </TooltipTrigger>
                         <TooltipContent className="max-w-sm">
                           <p className="text-xs">
-                            Measured in terawatt-hours. Data source: Ember (2025); Energy Institute - Statistical Review
-                            of World Energy (2024). Note: &quot;Other renewables&quot; include geothermal, wave, and tidal.
-                            OurWorldinData.org/energy | CC BY
+                            This shows electricity generation by source for 2024. Data source: Ember (2025); Energy Institute - Statistical Review
+                            of World Energy (2024). Note: 2024 data is used due to availability. OurWorldinData.org/energy | CC BY
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -414,7 +431,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                   <AccordionContent>
                     <div className="h-80">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={productionData} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
+                        <BarChart data={productionData} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
                           <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={60} />
                           <YAxis type="number" label={{ value: "TWh", angle: -90, position: "insideLeft" }} />
                           <ChartTooltip
@@ -448,17 +465,15 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                   >
                     <div className="flex items-center gap-2">
                       <TrendingUp className="h-5 w-5" />
-                      Energy imports & exports
+                      Is this country an energy importer or exporter?
                       <Tooltip>
                         <TooltipTrigger>
                           <Info className="h-4 w-4 text-muted-foreground" />
                         </TooltipTrigger>
                         <TooltipContent className="max-w-sm">
                           <p className="text-xs">
-                            Energy trade, measured as the percentage of energy use. Positive values indicate a country
-                            or region is a net importer of energy. Negative numbers indicate a country or region is a
-                            net exporter. Data source: IEA and OECD, via World Bank (2025). OurWorldinData.org/energy |
-                            CC BY
+                            This shows energy imports and exports over time. Positive values indicate net exports, negative values indicate net imports.
+                            Data source: International Energy Agency (IEA) and OECD. OurWorldinData.org/energy | CC BY
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -467,10 +482,9 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                   <AccordionContent>
                     <div className="h-80">
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={importsExportsData} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
+                        <LineChart data={importsExportsData} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
                           <XAxis dataKey="year" />
-                          <YAxis label={{ value: "% of energy use", angle: -90, position: "insideLeft" }} />
-                          <ReferenceLine y={0} stroke="#666" strokeDasharray="3 3" />
+                          <YAxis label={{ value: "Net Exports (% of energy use)", angle: -90, position: "insideLeft" }} />
                           <ChartTooltip
                             content={({ active, payload }) => {
                               if (active && payload && payload[0]) {
@@ -483,14 +497,15 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                               return null
                             }}
                           />
-                          <Line type="monotone" dataKey="value" stroke="#3B82F6" strokeWidth={2} />
+                          <Line type="monotone" dataKey="value" stroke="#8884d8" strokeWidth={2} dot={{ fill: "#8884d8", strokeWidth: 2, r: 4 }} />
+                          <ReferenceLine y={0} stroke="#666" strokeDasharray="3 3" />
                         </LineChart>
                       </ResponsiveContainer>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
 
-                {/* Energy Consumption Time Series */}
+                {/* Energy Mix Over Time */}
                 <AccordionItem value="timeseries">
                   <AccordionTrigger
                     className={`${visibleCharts >= 4 ? "" : "opacity-50 pointer-events-none"}`}
@@ -498,16 +513,15 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                   >
                     <div className="flex items-center gap-2">
                       <Clock className="h-5 w-5" />
-                      Energy consumption by source over time
+                      How has this country's energy mix evolved over time?
                       <Tooltip>
                         <TooltipTrigger>
                           <Info className="h-4 w-4 text-muted-foreground" />
                         </TooltipTrigger>
                         <TooltipContent className="max-w-sm">
                           <p className="text-xs">
-                            Measured in terms of primary energy using the substitution method. Data source: Energy
-                            Institute - Statistical Review of World Energy (2024). Note: &quot;Other renewables&quot; include
-                            geothermal, biomass, and waste energy. OurWorldinData.org/energy | CC BY
+                            This shows the evolution of energy consumption by source over time. Data source: Energy Institute - Statistical Review
+                            of World Energy (2024). OurWorldinData.org/energy | CC BY
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -516,74 +530,35 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                   <AccordionContent>
                     <div className="h-80">
                       <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={timeSeriesData} margin={{ top: 10, right: 10, left: 10, bottom: 40 }}>
+                        <AreaChart data={timeSeriesData} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
                           <XAxis dataKey="year" />
                           <YAxis label={{ value: "TWh", angle: -90, position: "insideLeft" }} />
-                          <ChartTooltip />
-                          <Legend />
-                          <Area
-                            type="monotone"
-                            dataKey="oil"
-                            stackId="1"
-                            stroke={energyColors.oil}
-                            fill={energyColors.oil}
+                          <ChartTooltip
+                            content={({ active, payload }) => {
+                              if (active && payload && payload.length) {
+                                return (
+                                  <div className="bg-white p-2 border rounded shadow">
+                                    <p className="font-semibold">{`Year: ${payload[0].payload.year}`}</p>
+                                    {payload.map((entry, index) => (
+                                      <p key={index} style={{ color: entry.color }}>
+                                        {`${entry.name}: ${entry.value} TWh`}
+                                      </p>
+                                    ))}
+                                  </div>
+                                )
+                              }
+                              return null
+                            }}
                           />
-                          <Area
-                            type="monotone"
-                            dataKey="gas"
-                            stackId="1"
-                            stroke={energyColors.gas}
-                            fill={energyColors.gas}
-                          />
-                          <Area
-                            type="monotone"
-                            dataKey="coal"
-                            stackId="1"
-                            stroke={energyColors.coal}
-                            fill={energyColors.coal}
-                          />
-                          <Area
-                            type="monotone"
-                            dataKey="nuclear"
-                            stackId="1"
-                            stroke={energyColors.nuclear}
-                            fill={energyColors.nuclear}
-                          />
-                          <Area
-                            type="monotone"
-                            dataKey="hydro"
-                            stackId="1"
-                            stroke={energyColors.hydro}
-                            fill={energyColors.hydro}
-                          />
-                          <Area
-                            type="monotone"
-                            dataKey="wind"
-                            stackId="1"
-                            stroke={energyColors.wind}
-                            fill={energyColors.wind}
-                          />
-                          <Area
-                            type="monotone"
-                            dataKey="solar"
-                            stackId="1"
-                            stroke={energyColors.solar}
-                            fill={energyColors.solar}
-                          />
-                          <Area
-                            type="monotone"
-                            dataKey="biofuels"
-                            stackId="1"
-                            stroke={energyColors.biofuels}
-                            fill={energyColors.biofuels}
-                          />
-                          <Area
-                            type="monotone"
-                            dataKey="other_renewables"
-                            stackId="1"
-                            stroke={energyColors.other_renewables}
-                            fill={energyColors.other_renewables}
-                          />
+                          <Area type="monotone" dataKey="oil" stackId="1" stroke="#8B4513" fill="#8B4513" />
+                          <Area type="monotone" dataKey="gas" stackId="1" stroke="#FF6347" fill="#FF6347" />
+                          <Area type="monotone" dataKey="coal" stackId="1" stroke="#2F4F4F" fill="#2F4F4F" />
+                          <Area type="monotone" dataKey="nuclear" stackId="1" stroke="#FFD700" fill="#FFD700" />
+                          <Area type="monotone" dataKey="hydro" stackId="1" stroke="#4169E1" fill="#4169E1" />
+                          <Area type="monotone" dataKey="wind" stackId="1" stroke="#87CEEB" fill="#87CEEB" />
+                          <Area type="monotone" dataKey="solar" stackId="1" stroke="#FFA500" fill="#FFA500" />
+                          <Area type="monotone" dataKey="biofuels" stackId="1" stroke="#228B22" fill="#228B22" />
+                          <Area type="monotone" dataKey="other_renewables" stackId="1" stroke="#32CD32" fill="#32CD32" />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
