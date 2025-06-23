@@ -160,22 +160,24 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
   const handleRevealNext = () => {
     if (visibleCharts < 4) {
       setVisibleCharts(visibleCharts + 1)
-      const accordionOrder = ["consumption", "production", "imports", "timeseries"]
+      const accordionOrder = ["consumption", "timeseries", "imports", "production"]
       setOpenAccordion(accordionOrder[visibleCharts])
       
-      // Auto-scroll to the newly revealed chart on mobile
-      setTimeout(() => {
-        const chartElements = document.querySelectorAll('[data-slot="accordion-item"]')
-        if (chartElements.length >= visibleCharts) {
-          const targetChart = chartElements[visibleCharts - 1] as HTMLElement
-          if (targetChart) {
-            targetChart.scrollIntoView({ 
-              behavior: 'smooth', 
-              block: 'center' 
-            })
+      // Auto-scroll to the newly revealed chart on mobile only
+      if (window.innerWidth < 768) { // md breakpoint
+        setTimeout(() => {
+          const chartElements = document.querySelectorAll('[data-slot="accordion-item"]')
+          if (chartElements.length >= visibleCharts) {
+            const targetChart = chartElements[visibleCharts - 1] as HTMLElement
+            if (targetChart) {
+              targetChart.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+              })
+            }
           }
-        }
-      }, 300) // Longer delay to ensure accordion animation completes
+        }, 300) // Longer delay to ensure accordion animation completes
+      }
     }
   }
 
@@ -210,6 +212,11 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
 
     // Wait a moment to show the loading state, then update everything together
     await new Promise(resolve => setTimeout(resolve, 800))
+
+    // Scroll to top on mobile after making a guess
+    if (window.innerWidth < 768) { // md breakpoint
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
 
     if (currentRound < 4) {
       // Update all state simultaneously
@@ -499,23 +506,23 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                   </AccordionContent>
                 </AccordionItem>
 
-                {/* Electricity Production 2024 */}
-                <AccordionItem value="production">
+                {/* Energy Mix Over Time */}
+                <AccordionItem value="timeseries">
                   <AccordionTrigger
                     className={`${visibleCharts >= 2 ? "" : "opacity-50 pointer-events-none"}`}
                     disabled={visibleCharts < 2}
                   >
                     <div className="flex items-center gap-2">
-                      <Zap className="h-5 w-5" />
-                      How does this country generate electricity (including what it exports)?
+                      <Clock className="h-5 w-5" />
+                      How has this country&apos;s energy mix evolved over time?
                       <Tooltip>
                         <TooltipTrigger>
                           <Info className="h-4 w-4 text-muted-foreground hidden md:block" />
                         </TooltipTrigger>
                         <TooltipContent className="max-w-sm">
                           <p className="text-xs">
-                            This shows electricity generation by source for 2024. Data source: Ember (2025); Energy Institute - Statistical Review
-                            of World Energy (2024). Note: 2024 data is used due to availability. OurWorldinData.org/energy | CC BY
+                            This shows the evolution of energy consumption by source over time. Data source: Energy Institute - Statistical Review
+                            of World Energy (2024). OurWorldinData.org/energy | CC BY
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -524,31 +531,41 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                   <AccordionContent>
                     <div className="h-80 md:pointer-events-auto pointer-events-none">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={productionData} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
-                          <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={60} />
-                          <YAxis type="number" label={{ value: "TWh", angle: -90, position: "insideLeft" }} />
+                        <AreaChart data={timeSeriesData} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
+                          <XAxis dataKey="year" />
+                          <YAxis label={{ value: "TWh", angle: -90, position: "insideLeft" }} />
                           <ChartTooltip
                             content={({ active, payload }) => {
-                              if (active && payload && payload[0]) {
+                              if (active && payload && payload.length) {
                                 return (
                                   <div className="bg-white p-2 border rounded shadow hidden md:block">
-                                    <p className="font-semibold">{`${payload[0].payload.name}: ${Math.round(payload[0].value)} TWh`}</p>
+                                    <p className="font-semibold">{`Year: ${payload[0].payload.year}`}</p>
+                                    {payload.map((entry, index) => (
+                                      <p key={index} style={{ color: entry.color }}>
+                                        {`${entry.name}: ${Math.round(entry.value)} TWh`}
+                                      </p>
+                                    ))}
                                   </div>
                                 )
                               }
                               return null
                             }}
                           />
-                          <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                            {productionData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.fill} />
-                            ))}
-                          </Bar>
-                        </BarChart>
+                          <Legend />
+                          <Area type="monotone" dataKey="oil" stackId="1" stroke="#8B4513" fill="#8B4513" name="Oil" />
+                          <Area type="monotone" dataKey="gas" stackId="1" stroke="#FF6347" fill="#FF6347" name="Gas" />
+                          <Area type="monotone" dataKey="coal" stackId="1" stroke="#2F4F4F" fill="#2F4F4F" name="Coal" />
+                          <Area type="monotone" dataKey="nuclear" stackId="1" stroke="#FFD700" fill="#FFD700" name="Nuclear" />
+                          <Area type="monotone" dataKey="hydro" stackId="1" stroke="#4169E1" fill="#4169E1" name="Hydro" />
+                          <Area type="monotone" dataKey="wind" stackId="1" stroke="#87CEEB" fill="#87CEEB" name="Wind" />
+                          <Area type="monotone" dataKey="solar" stackId="1" stroke="#FFA500" fill="#FFA500" name="Solar" />
+                          <Area type="monotone" dataKey="biofuels" stackId="1" stroke="#228B22" fill="#228B22" name="Biofuels" />
+                          <Area type="monotone" dataKey="other_renewables" stackId="1" stroke="#32CD32" fill="#32CD32" name="Other Renewables" />
+                        </AreaChart>
                       </ResponsiveContainer>
                     </div>
                     <div className="md:hidden mt-2 p-2 bg-gray-50 rounded text-xs text-gray-600">
-                      This shows electricity generation by source for 2024. Data source: Ember (2025); Energy Institute - Statistical Review of World Energy (2024). Note: 2024 data is used due to availability. OurWorldinData.org/energy | CC BY
+                      This shows the evolution of energy consumption by source over time. Data source: Energy Institute - Statistical Review of World Energy (2024). OurWorldinData.org/energy | CC BY
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -616,23 +633,23 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                   </AccordionContent>
                 </AccordionItem>
 
-                {/* Energy Mix Over Time */}
-                <AccordionItem value="timeseries">
+                {/* Electricity Production 2024 */}
+                <AccordionItem value="production">
                   <AccordionTrigger
                     className={`${visibleCharts >= 4 ? "" : "opacity-50 pointer-events-none"}`}
                     disabled={visibleCharts < 4}
                   >
                     <div className="flex items-center gap-2">
-                      <Clock className="h-5 w-5" />
-                      How has this country&apos;s energy mix evolved over time?
+                      <Zap className="h-5 w-5" />
+                      How does this country generate electricity?
                       <Tooltip>
                         <TooltipTrigger>
                           <Info className="h-4 w-4 text-muted-foreground hidden md:block" />
                         </TooltipTrigger>
                         <TooltipContent className="max-w-sm">
                           <p className="text-xs">
-                            This shows the evolution of energy consumption by source over time. Data source: Energy Institute - Statistical Review
-                            of World Energy (2024). OurWorldinData.org/energy | CC BY
+                            This shows electricity generation by source for 2024. Data source: Ember (2025); Energy Institute - Statistical Review
+                            of World Energy (2024). Note: 2024 data is used due to availability. OurWorldinData.org/energy | CC BY
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -641,41 +658,31 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                   <AccordionContent>
                     <div className="h-80 md:pointer-events-auto pointer-events-none">
                       <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={timeSeriesData} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
-                          <XAxis dataKey="year" />
-                          <YAxis label={{ value: "TWh", angle: -90, position: "insideLeft" }} />
+                        <BarChart data={productionData} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
+                          <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={60} />
+                          <YAxis type="number" label={{ value: "TWh", angle: -90, position: "insideLeft" }} />
                           <ChartTooltip
                             content={({ active, payload }) => {
-                              if (active && payload && payload.length) {
+                              if (active && payload && payload[0]) {
                                 return (
                                   <div className="bg-white p-2 border rounded shadow hidden md:block">
-                                    <p className="font-semibold">{`Year: ${payload[0].payload.year}`}</p>
-                                    {payload.map((entry, index) => (
-                                      <p key={index} style={{ color: entry.color }}>
-                                        {`${entry.name}: ${Math.round(entry.value)} TWh`}
-                                      </p>
-                                    ))}
+                                    <p className="font-semibold">{`${payload[0].payload.name}: ${Math.round(payload[0].value)} TWh`}</p>
                                   </div>
                                 )
                               }
                               return null
                             }}
                           />
-                          <Legend />
-                          <Area type="monotone" dataKey="oil" stackId="1" stroke="#8B4513" fill="#8B4513" name="Oil" />
-                          <Area type="monotone" dataKey="gas" stackId="1" stroke="#FF6347" fill="#FF6347" name="Gas" />
-                          <Area type="monotone" dataKey="coal" stackId="1" stroke="#2F4F4F" fill="#2F4F4F" name="Coal" />
-                          <Area type="monotone" dataKey="nuclear" stackId="1" stroke="#FFD700" fill="#FFD700" name="Nuclear" />
-                          <Area type="monotone" dataKey="hydro" stackId="1" stroke="#4169E1" fill="#4169E1" name="Hydro" />
-                          <Area type="monotone" dataKey="wind" stackId="1" stroke="#87CEEB" fill="#87CEEB" name="Wind" />
-                          <Area type="monotone" dataKey="solar" stackId="1" stroke="#FFA500" fill="#FFA500" name="Solar" />
-                          <Area type="monotone" dataKey="biofuels" stackId="1" stroke="#228B22" fill="#228B22" name="Biofuels" />
-                          <Area type="monotone" dataKey="other_renewables" stackId="1" stroke="#32CD32" fill="#32CD32" name="Other Renewables" />
-                        </AreaChart>
+                          <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                            {productionData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.fill} />
+                            ))}
+                          </Bar>
+                        </BarChart>
                       </ResponsiveContainer>
                     </div>
                     <div className="md:hidden mt-2 p-2 bg-gray-50 rounded text-xs text-gray-600">
-                      This shows the evolution of energy consumption by source over time. Data source: Energy Institute - Statistical Review of World Energy (2024). OurWorldinData.org/energy | CC BY
+                      This shows electricity generation by source for 2024. Data source: Ember (2025); Energy Institute - Statistical Review of World Energy (2024). Note: 2024 data is used due to availability. OurWorldinData.org/energy | CC BY
                     </div>
                   </AccordionContent>
                 </AccordionItem>
