@@ -455,7 +455,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                       What fuels this country?
                       <Tooltip>
                         <TooltipTrigger>
-                          <Info className="h-4 w-4 text-muted-foreground" />
+                          <Info className="h-4 w-4 text-muted-foreground hidden md:block" />
                         </TooltipTrigger>
                         <TooltipContent className="max-w-sm">
                           <p className="text-xs">
@@ -468,7 +468,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
-                    <div className="h-80">
+                    <div className="h-80 md:pointer-events-auto pointer-events-none">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={consumptionData} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
                           <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={60} />
@@ -477,7 +477,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                             content={({ active, payload }) => {
                               if (active && payload && payload[0]) {
                                 return (
-                                  <div className="bg-white p-2 border rounded shadow">
+                                  <div className="bg-white p-2 border rounded shadow hidden md:block">
                                     <p className="font-semibold">{`${payload[0].payload.name}: ${Math.round(payload[0].value)} TWh`}</p>
                                   </div>
                                 )
@@ -493,6 +493,9 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
+                    <div className="md:hidden mt-2 p-2 bg-gray-50 rounded text-xs text-gray-600">
+                      This shows the breakdown of primary energy consumption by source for 2023. Data source: Energy Institute - Statistical Review of World Energy (2024). Note: 2023 data is used due to availability. OurWorldinData.org/energy | CC BY
+                    </div>
                   </AccordionContent>
                 </AccordionItem>
 
@@ -507,7 +510,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                       How does this country generate electricity (including what it exports)?
                       <Tooltip>
                         <TooltipTrigger>
-                          <Info className="h-4 w-4 text-muted-foreground" />
+                          <Info className="h-4 w-4 text-muted-foreground hidden md:block" />
                         </TooltipTrigger>
                         <TooltipContent className="max-w-sm">
                           <p className="text-xs">
@@ -519,7 +522,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
-                    <div className="h-80">
+                    <div className="h-80 md:pointer-events-auto pointer-events-none">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={productionData} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
                           <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={60} />
@@ -528,7 +531,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                             content={({ active, payload }) => {
                               if (active && payload && payload[0]) {
                                 return (
-                                  <div className="bg-white p-2 border rounded shadow">
+                                  <div className="bg-white p-2 border rounded shadow hidden md:block">
                                     <p className="font-semibold">{`${payload[0].payload.name}: ${Math.round(payload[0].value)} TWh`}</p>
                                   </div>
                                 )
@@ -544,6 +547,9 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
+                    <div className="md:hidden mt-2 p-2 bg-gray-50 rounded text-xs text-gray-600">
+                      This shows electricity generation by source for 2024. Data source: Ember (2025); Energy Institute - Statistical Review of World Energy (2024). Note: 2024 data is used due to availability. OurWorldinData.org/energy | CC BY
+                    </div>
                   </AccordionContent>
                 </AccordionItem>
 
@@ -558,7 +564,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                       Is this country an energy importer (-) or exporter (+)?
                       <Tooltip>
                         <TooltipTrigger>
-                          <Info className="h-4 w-4 text-muted-foreground" />
+                          <Info className="h-4 w-4 text-muted-foreground hidden md:block" />
                         </TooltipTrigger>
                         <TooltipContent className="max-w-sm">
                           <p className="text-xs">
@@ -570,7 +576,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
-                    <div className="h-80">
+                    <div className="h-80 md:pointer-events-auto pointer-events-none">
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={importsExportsData} margin={{ top: 10, right: 10, left: 15, bottom: 5 }}>
                           <XAxis dataKey="year" />
@@ -591,7 +597,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                             content={({ active, payload }) => {
                               if (active && payload && payload[0]) {
                                 return (
-                                  <div className="bg-white p-2 border rounded shadow">
+                                  <div className="bg-white p-2 border rounded shadow hidden md:block">
                                     <p className="font-semibold">{`${payload[0].payload.year}: ${Math.round(payload[0].value)}%`}</p>
                                   </div>
                                 )
@@ -603,6 +609,9 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                           <ReferenceLine y={0} stroke="#666" strokeDasharray="3 3" />
                         </LineChart>
                       </ResponsiveContainer>
+                    </div>
+                    <div className="md:hidden mt-2 p-2 bg-gray-50 rounded text-xs text-gray-600">
+                      This shows energy imports and exports over time. Positive values indicate net exports, negative values indicate net imports. Data source: International Energy Agency (IEA) and OECD. OurWorldinData.org/energy | CC BY
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -618,7 +627,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                       How has this country&apos;s energy mix evolved over time?
                       <Tooltip>
                         <TooltipTrigger>
-                          <Info className="h-4 w-4 text-muted-foreground" />
+                          <Info className="h-4 w-4 text-muted-foreground hidden md:block" />
                         </TooltipTrigger>
                         <TooltipContent className="max-w-sm">
                           <p className="text-xs">
@@ -630,7 +639,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
-                    <div className="h-80">
+                    <div className="h-80 md:pointer-events-auto pointer-events-none">
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={timeSeriesData} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
                           <XAxis dataKey="year" />
@@ -639,7 +648,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                             content={({ active, payload }) => {
                               if (active && payload && payload.length) {
                                 return (
-                                  <div className="bg-white p-2 border rounded shadow">
+                                  <div className="bg-white p-2 border rounded shadow hidden md:block">
                                     <p className="font-semibold">{`Year: ${payload[0].payload.year}`}</p>
                                     {payload.map((entry, index) => (
                                       <p key={index} style={{ color: entry.color }}>
@@ -664,6 +673,9 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                           <Area type="monotone" dataKey="other_renewables" stackId="1" stroke="#32CD32" fill="#32CD32" name="Other Renewables" />
                         </AreaChart>
                       </ResponsiveContainer>
+                    </div>
+                    <div className="md:hidden mt-2 p-2 bg-gray-50 rounded text-xs text-gray-600">
+                      This shows the evolution of energy consumption by source over time. Data source: Energy Institute - Statistical Review of World Energy (2024). OurWorldinData.org/energy | CC BY
                     </div>
                   </AccordionContent>
                 </AccordionItem>
