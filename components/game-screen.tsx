@@ -22,6 +22,7 @@ import {
 } from "recharts"
 import { ChartTooltip } from "@/components/ui/chart"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { getEnergyData, EnergyConsumptionData, SUPPORTED_COUNTRIES, COUNTRY_NAMES } from "@/lib/energy-data"
 
 interface GameScreenProps {
   onGameComplete: (results: GameResult[]) => void
@@ -39,718 +40,83 @@ interface GameResult {
 interface CountryOption {
   name: string
   flag: string
-  zone: string
+  code: string
 }
 
-interface EnergyData {
-  energyConsumption2023: { [key: string]: number }
-  electricityProduction2023: { [key: string]: number }
-  energyImportsExports: Array<{ year: number; value: number }>
-  energyConsumptionTimeSeries: Array<{ year: number; [key: string]: number }>
+// Country flags mapping
+const COUNTRY_FLAGS: { [key: string]: string } = {
+  'USA': '🇺🇸', 'CHN': '🇨🇳', 'JPN': '🇯🇵', 'DEU': '🇩🇪', 'RUS': '🇷🇺', 'IND': '🇮🇳', 'CAN': '🇨🇦', 'FRA': '🇫🇷', 'ITA': '🇮🇹', 'GBR': '🇬🇧',
+  'SAU': '🇸🇦', 'BRA': '🇧🇷', 'MEX': '🇲🇽', 'KOR': '🇰🇷', 'ESP': '🇪🇸', 'IRN': '🇮🇷', 'IDN': '🇮🇩', 'NLD': '🇳🇱', 'AUS': '🇦🇺', 'SGP': '🇸🇬',
+  'TWN': '🇹🇼', 'THA': '🇹🇭', 'BEL': '🇧🇪', 'TUR': '🇹🇷', 'ARG': '🇦🇷', 'EGY': '🇪🇬', 'VEN': '🇻🇪', 'SWE': '🇸🇪', 'POL': '🇵🇱', 'ARE': '🇦🇪',
+  'MYS': '🇲🇾', 'ZAF': '🇿🇦', 'IRQ': '🇮🇶', 'UKR': '🇺🇦', 'GRC': '🇬🇷', 'PHL': '🇵🇭', 'PAK': '🇵🇰', 'ROU': '🇷🇴', 'CHE': '🇨🇭', 'AUT': '🇦🇹',
+  'COL': '🇨🇴', 'DNK': '🇩🇰', 'PRT': '🇵🇹', 'KWT': '🇰🇼', 'FIN': '🇫🇮', 'CHL': '🇨🇱', 'HKG': '🇭🇰', 'DZA': '🇩🇿', 'VNM': '🇻🇳', 'ISR': '🇮🇱',
+  'CZE': '🇨🇿', 'NOR': '🇳🇴', 'KAZ': '🇰🇿', 'BLR': '🇧🇾', 'HUN': '🇭🇺', 'BGR': '🇧🇬', 'PER': '🇵🇪', 'MAR': '🇲🇦', 'ECU': '🇪🇨', 'IRL': '🇮🇪',
+  'NZL': '🇳🇿', 'SVK': '🇸🇰', 'UZB': '🇺🇿', 'QAT': '🇶🇦', 'AZE': '🇦🇿', 'OMN': '🇴🇲', 'BGD': '🇧🇩', 'TKM': '🇹🇲', 'LKA': '🇱🇰', 'LTU': '🇱🇹',
+  'HRV': '🇭🇷', 'LUX': '🇱🇺', 'TTO': '🇹🇹', 'CYP': '🇨🇾', 'LVA': '🇱🇻', 'SVN': '🇸🇮', 'EST': '🇪🇪', 'ISL': '🇮🇸', 'MKD': '🇲🇰'
 }
 
 const energyColors: { [key: string]: string } = {
-  // Energy sources
   oil: "#8B4513",
-  gas: "#FF6347",
   coal: "#2F4F4F",
+  gas: "#FF6347",
   nuclear: "#FFD700",
   hydro: "#4169E1",
   wind: "#87CEEB",
   solar: "#FFA500",
   biofuels: "#228B22",
-  "other renewables": "#32CD32",
-  // Electricity sources
-  "fossil fuels": "#8B4513",
-  "natural gas": "#FF6347",
-  hydropower: "#4169E1",
-  "wind power": "#87CEEB",
-  "solar power": "#FFA500",
-  "nuclear power": "#FFD700",
-  biomass: "#228B22",
-  geothermal: "#DC143C",
-  "other sources": "#808080",
+  other_renewables: "#32CD32",
 }
 
-const countryOptions: CountryOption[] = [
-  { name: "Great Britain", flag: "🇬🇧", zone: "GB" },
-  { name: "Germany", flag: "🇩🇪", zone: "DE" },
-  { name: "France", flag: "🇫🇷", zone: "FR" },
-  { name: "Spain", flag: "🇪🇸", zone: "ES" },
-  { name: "Italy", flag: "🇮🇹", zone: "IT" },
-  { name: "Netherlands", flag: "🇳🇱", zone: "NL" },
-  { name: "Norway", flag: "🇳🇴", zone: "NO" },
-  { name: "Sweden", flag: "🇸🇪", zone: "SE" },
-]
-
-// Mock data - replace with API calls later
-const mockEnergyData: { [key: string]: EnergyData } = {
-  GB: {
-    energyConsumption2023: {
-      oil: 1200,
-      gas: 1800,
-      coal: 200,
-      nuclear: 400,
-      hydro: 50,
-      wind: 300,
-      solar: 80,
-      biofuels: 120,
-      "other renewables": 90,
-    },
-    electricityProduction2023: {
-      "natural gas": 150,
-      "nuclear power": 180,
-      "wind power": 120,
-      "solar power": 40,
-      hydropower: 20,
-      coal: 15,
-      biomass: 35,
-      "other sources": 10,
-    },
-    energyImportsExports: [
-      { year: 1960, value: -15 },
-      { year: 1970, value: -25 },
-      { year: 1980, value: -30 },
-      { year: 1990, value: -20 },
-      { year: 2000, value: 10 },
-      { year: 2010, value: 25 },
-      { year: 2015, value: 35 },
-    ],
-    energyConsumptionTimeSeries: [
-      {
-        year: 1965,
-        oil: 800,
-        gas: 200,
-        coal: 1200,
-        nuclear: 0,
-        hydro: 30,
-        wind: 0,
-        solar: 0,
-        biofuels: 10,
-        "other renewables": 20,
-      },
-      {
-        year: 1980,
-        oil: 1000,
-        gas: 800,
-        coal: 1000,
-        nuclear: 100,
-        hydro: 40,
-        wind: 0,
-        solar: 0,
-        biofuels: 20,
-        "other renewables": 30,
-      },
-      {
-        year: 2000,
-        oil: 1100,
-        gas: 1400,
-        coal: 600,
-        nuclear: 300,
-        hydro: 45,
-        wind: 20,
-        solar: 5,
-        biofuels: 60,
-        "other renewables": 50,
-      },
-      {
-        year: 2023,
-        oil: 1200,
-        gas: 1800,
-        coal: 200,
-        nuclear: 400,
-        hydro: 50,
-        wind: 300,
-        solar: 80,
-        biofuels: 120,
-        "other renewables": 90,
-      },
-    ],
-  },
-  DE: {
-    energyConsumption2023: {
-      oil: 2200,
-      gas: 2400,
-      coal: 1800,
-      nuclear: 300,
-      hydro: 120,
-      wind: 600,
-      solar: 250,
-      biofuels: 180,
-      "other renewables": 150,
-    },
-    electricityProduction2023: {
-      "natural gas": 280,
-      coal: 220,
-      "nuclear power": 150,
-      "wind power": 320,
-      "solar power": 180,
-      hydropower: 80,
-      biomass: 120,
-      "other sources": 20,
-    },
-    energyImportsExports: [
-      { year: 1960, value: 20 },
-      { year: 1970, value: 35 },
-      { year: 1980, value: 45 },
-      { year: 1990, value: 40 },
-      { year: 2000, value: 55 },
-      { year: 2010, value: 60 },
-      { year: 2015, value: 65 },
-    ],
-    energyConsumptionTimeSeries: [
-      {
-        year: 1965,
-        oil: 1200,
-        gas: 400,
-        coal: 2800,
-        nuclear: 0,
-        hydro: 60,
-        wind: 0,
-        solar: 0,
-        biofuels: 20,
-        "other renewables": 40,
-      },
-      {
-        year: 1980,
-        oil: 1800,
-        gas: 1200,
-        coal: 2600,
-        nuclear: 200,
-        hydro: 80,
-        wind: 0,
-        solar: 0,
-        biofuels: 40,
-        "other renewables": 60,
-      },
-      {
-        year: 2000,
-        oil: 2000,
-        gas: 2000,
-        coal: 2200,
-        nuclear: 400,
-        hydro: 100,
-        wind: 50,
-        solar: 10,
-        biofuels: 100,
-        "other renewables": 100,
-      },
-      {
-        year: 2023,
-        oil: 2200,
-        gas: 2400,
-        coal: 1800,
-        nuclear: 300,
-        hydro: 120,
-        wind: 600,
-        solar: 250,
-        biofuels: 180,
-        "other renewables": 150,
-      },
-    ],
-  },
-  FR: {
-    energyConsumption2023: {
-      oil: 1400,
-      gas: 800,
-      coal: 150,
-      nuclear: 2200,
-      hydro: 280,
-      wind: 180,
-      solar: 90,
-      biofuels: 140,
-      "other renewables": 110,
-    },
-    electricityProduction2023: {
-      "nuclear power": 380,
-      hydropower: 120,
-      "natural gas": 80,
-      "wind power": 90,
-      "solar power": 50,
-      coal: 20,
-      biomass: 40,
-      "other sources": 15,
-    },
-    energyImportsExports: [
-      { year: 1960, value: 45 },
-      { year: 1970, value: 55 },
-      { year: 1980, value: 60 },
-      { year: 1990, value: 40 },
-      { year: 2000, value: 25 },
-      { year: 2010, value: 15 },
-      { year: 2015, value: 10 },
-    ],
-    energyConsumptionTimeSeries: [
-      {
-        year: 1965,
-        oil: 800,
-        gas: 200,
-        coal: 600,
-        nuclear: 0,
-        hydro: 150,
-        wind: 0,
-        solar: 0,
-        biofuels: 30,
-        "other renewables": 50,
-      },
-      {
-        year: 1980,
-        oil: 1200,
-        gas: 600,
-        coal: 400,
-        nuclear: 800,
-        hydro: 200,
-        wind: 0,
-        solar: 0,
-        biofuels: 60,
-        "other renewables": 80,
-      },
-      {
-        year: 2000,
-        oil: 1300,
-        gas: 700,
-        coal: 200,
-        nuclear: 2000,
-        hydro: 250,
-        wind: 20,
-        solar: 5,
-        biofuels: 100,
-        "other renewables": 90,
-      },
-      {
-        year: 2023,
-        oil: 1400,
-        gas: 800,
-        coal: 150,
-        nuclear: 2200,
-        hydro: 280,
-        wind: 180,
-        solar: 90,
-        biofuels: 140,
-        "other renewables": 110,
-      },
-    ],
-  },
-  ES: {
-    energyConsumption2023: {
-      oil: 1100,
-      gas: 600,
-      coal: 300,
-      nuclear: 350,
-      hydro: 180,
-      wind: 280,
-      solar: 150,
-      biofuels: 90,
-      "other renewables": 80,
-    },
-    electricityProduction2023: {
-      "natural gas": 120,
-      "nuclear power": 140,
-      "wind power": 180,
-      "solar power": 90,
-      hydropower: 80,
-      coal: 40,
-      biomass: 30,
-      "other sources": 12,
-    },
-    energyImportsExports: [
-      { year: 1960, value: 25 },
-      { year: 1970, value: 40 },
-      { year: 1980, value: 55 },
-      { year: 1990, value: 60 },
-      { year: 2000, value: 65 },
-      { year: 2010, value: 70 },
-      { year: 2015, value: 72 },
-    ],
-    energyConsumptionTimeSeries: [
-      {
-        year: 1965,
-        oil: 400,
-        gas: 100,
-        coal: 800,
-        nuclear: 0,
-        hydro: 80,
-        wind: 0,
-        solar: 0,
-        biofuels: 20,
-        "other renewables": 30,
-      },
-      {
-        year: 1980,
-        oil: 800,
-        gas: 300,
-        coal: 600,
-        nuclear: 50,
-        hydro: 120,
-        wind: 0,
-        solar: 0,
-        biofuels: 40,
-        "other renewables": 50,
-      },
-      {
-        year: 2000,
-        oil: 1000,
-        gas: 500,
-        coal: 400,
-        nuclear: 300,
-        hydro: 150,
-        wind: 50,
-        solar: 10,
-        biofuels: 70,
-        "other renewables": 60,
-      },
-      {
-        year: 2023,
-        oil: 1100,
-        gas: 600,
-        coal: 300,
-        nuclear: 350,
-        hydro: 180,
-        wind: 280,
-        solar: 150,
-        biofuels: 90,
-        "other renewables": 80,
-      },
-    ],
-  },
-  IT: {
-    energyConsumption2023: {
-      oil: 1300,
-      gas: 1200,
-      coal: 200,
-      nuclear: 0,
-      hydro: 220,
-      wind: 120,
-      solar: 140,
-      biofuels: 100,
-      "other renewables": 90,
-    },
-    electricityProduction2023: {
-      "natural gas": 200,
-      hydropower: 110,
-      "solar power": 80,
-      "wind power": 70,
-      coal: 30,
-      biomass: 50,
-      "other sources": 15,
-    },
-    energyImportsExports: [
-      { year: 1960, value: 40 },
-      { year: 1970, value: 55 },
-      { year: 1980, value: 70 },
-      { year: 1990, value: 75 },
-      { year: 2000, value: 80 },
-      { year: 2010, value: 82 },
-      { year: 2015, value: 85 },
-    ],
-    energyConsumptionTimeSeries: [
-      {
-        year: 1965,
-        oil: 600,
-        gas: 200,
-        coal: 400,
-        nuclear: 0,
-        hydro: 100,
-        wind: 0,
-        solar: 0,
-        biofuels: 30,
-        "other renewables": 40,
-      },
-      {
-        year: 1980,
-        oil: 1000,
-        gas: 600,
-        coal: 300,
-        nuclear: 20,
-        hydro: 150,
-        wind: 0,
-        solar: 0,
-        biofuels: 50,
-        "other renewables": 60,
-      },
-      {
-        year: 2000,
-        oil: 1200,
-        gas: 1000,
-        coal: 250,
-        nuclear: 0,
-        hydro: 180,
-        wind: 30,
-        solar: 20,
-        biofuels: 80,
-        "other renewables": 70,
-      },
-      {
-        year: 2023,
-        oil: 1300,
-        gas: 1200,
-        coal: 200,
-        nuclear: 0,
-        hydro: 220,
-        wind: 120,
-        solar: 140,
-        biofuels: 100,
-        "other renewables": 90,
-      },
-    ],
-  },
-  NL: {
-    energyConsumption2023: {
-      oil: 600,
-      gas: 800,
-      coal: 300,
-      nuclear: 20,
-      hydro: 5,
-      wind: 80,
-      solar: 60,
-      biofuels: 40,
-      "other renewables": 30,
-    },
-    electricityProduction2023: {
-      "natural gas": 120,
-      coal: 40,
-      "nuclear power": 15,
-      "wind power": 50,
-      "solar power": 35,
-      biomass: 25,
-      "other sources": 8,
-    },
-    energyImportsExports: [
-      { year: 1960, value: -20 },
-      { year: 1970, value: -35 },
-      { year: 1980, value: -40 },
-      { year: 1990, value: -30 },
-      { year: 2000, value: -15 },
-      { year: 2010, value: 10 },
-      { year: 2015, value: 25 },
-    ],
-    energyConsumptionTimeSeries: [
-      {
-        year: 1965,
-        oil: 400,
-        gas: 200,
-        coal: 400,
-        nuclear: 0,
-        hydro: 2,
-        wind: 0,
-        solar: 0,
-        biofuels: 10,
-        "other renewables": 15,
-      },
-      {
-        year: 1980,
-        oil: 500,
-        gas: 500,
-        coal: 350,
-        nuclear: 10,
-        hydro: 3,
-        wind: 0,
-        solar: 0,
-        biofuels: 20,
-        "other renewables": 20,
-      },
-      {
-        year: 2000,
-        oil: 550,
-        gas: 700,
-        coal: 320,
-        nuclear: 18,
-        hydro: 4,
-        wind: 10,
-        solar: 2,
-        biofuels: 30,
-        "other renewables": 25,
-      },
-      {
-        year: 2023,
-        oil: 600,
-        gas: 800,
-        coal: 300,
-        nuclear: 20,
-        hydro: 5,
-        wind: 80,
-        solar: 60,
-        biofuels: 40,
-        "other renewables": 30,
-      },
-    ],
-  },
-  NO: {
-    energyConsumption2023: {
-      oil: 400,
-      gas: 50,
-      coal: 20,
-      nuclear: 0,
-      hydro: 800,
-      wind: 60,
-      solar: 5,
-      biofuels: 30,
-      "other renewables": 25,
-    },
-    electricityProduction2023: {
-      hydropower: 160,
-      "wind power": 25,
-      "natural gas": 5,
-      "other sources": 3,
-    },
-    energyImportsExports: [
-      { year: 1960, value: -80 },
-      { year: 1970, value: -120 },
-      { year: 1980, value: -150 },
-      { year: 1990, value: -180 },
-      { year: 2000, value: -200 },
-      { year: 2010, value: -220 },
-      { year: 2015, value: -250 },
-    ],
-    energyConsumptionTimeSeries: [
-      {
-        year: 1965,
-        oil: 200,
-        gas: 10,
-        coal: 50,
-        nuclear: 0,
-        hydro: 400,
-        wind: 0,
-        solar: 0,
-        biofuels: 15,
-        "other renewables": 10,
-      },
-      {
-        year: 1980,
-        oil: 300,
-        gas: 20,
-        coal: 30,
-        nuclear: 0,
-        hydro: 600,
-        wind: 0,
-        solar: 0,
-        biofuels: 20,
-        "other renewables": 15,
-      },
-      {
-        year: 2000,
-        oil: 350,
-        gas: 40,
-        coal: 25,
-        nuclear: 0,
-        hydro: 700,
-        wind: 5,
-        solar: 1,
-        biofuels: 25,
-        "other renewables": 20,
-      },
-      {
-        year: 2023,
-        oil: 400,
-        gas: 50,
-        coal: 20,
-        nuclear: 0,
-        hydro: 800,
-        wind: 60,
-        solar: 5,
-        biofuels: 30,
-        "other renewables": 25,
-      },
-    ],
-  },
-  SE: {
-    energyConsumption2023: {
-      oil: 500,
-      gas: 30,
-      coal: 50,
-      nuclear: 600,
-      hydro: 400,
-      wind: 120,
-      solar: 10,
-      biofuels: 180,
-      "other renewables": 60,
-    },
-    electricityProduction2023: {
-      "nuclear power": 120,
-      hydropower: 140,
-      "wind power": 80,
-      biomass: 40,
-      "other sources": 8,
-    },
-    energyImportsExports: [
-      { year: 1960, value: 15 },
-      { year: 1970, value: 10 },
-      { year: 1980, value: -5 },
-      { year: 1990, value: -15 },
-      { year: 2000, value: -25 },
-      { year: 2010, value: -30 },
-      { year: 2015, value: -35 },
-    ],
-    energyConsumptionTimeSeries: [
-      {
-        year: 1965,
-        oil: 300,
-        gas: 5,
-        coal: 200,
-        nuclear: 0,
-        hydro: 200,
-        wind: 0,
-        solar: 0,
-        biofuels: 80,
-        "other renewables": 30,
-      },
-      {
-        year: 1980,
-        oil: 400,
-        gas: 15,
-        coal: 100,
-        nuclear: 200,
-        hydro: 300,
-        wind: 0,
-        solar: 0,
-        biofuels: 120,
-        "other renewables": 40,
-      },
-      {
-        year: 2000,
-        oil: 450,
-        gas: 25,
-        coal: 75,
-        nuclear: 500,
-        hydro: 350,
-        wind: 20,
-        solar: 2,
-        biofuels: 150,
-        "other renewables": 50,
-      },
-      {
-        year: 2023,
-        oil: 500,
-        gas: 30,
-        coal: 50,
-        nuclear: 600,
-        hydro: 400,
-        wind: 120,
-        solar: 10,
-        biofuels: 180,
-        "other renewables": 60,
-      },
-    ],
-  },
-}
+// Create country options from supported countries
+const countryOptions: CountryOption[] = SUPPORTED_COUNTRIES.map(code => ({
+  name: COUNTRY_NAMES[code] || code,
+  flag: COUNTRY_FLAGS[code] || '🏳️',
+  code: code
+}))
 
 export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScreenProps) {
   const [currentRound, setCurrentRound] = useState(0)
   const [currentCountryOptions, setCurrentCountryOptions] = useState<CountryOption[]>([])
   const [correctCountry, setCorrectCountry] = useState<CountryOption | null>(null)
-  const [currentEnergyData, setCurrentEnergyData] = useState<EnergyData | null>(null)
+  const [currentEnergyData, setCurrentEnergyData] = useState<EnergyConsumptionData | null>(null)
   const [visibleCharts, setVisibleCharts] = useState(1)
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
   const [gameResults, setGameResults] = useState<GameResult[]>([])
   const [openAccordion, setOpenAccordion] = useState<string>("consumption")
+  const [isLoading, setIsLoading] = useState(true)
+  const [energyData, setEnergyData] = useState<{ [countryCode: string]: EnergyConsumptionData } | null>(null)
 
   useEffect(() => {
-    startNewRound()
+    // Load energy data on component mount
+    const loadEnergyData = async () => {
+      try {
+        setIsLoading(true)
+        const data = await getEnergyData()
+        setEnergyData(data)
+      } catch (error) {
+        console.error('Failed to load energy data:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadEnergyData()
   }, [])
 
+  useEffect(() => {
+    if (!isLoading && energyData) {
+      startNewRound()
+    }
+  }, [isLoading, energyData])
+
   const startNewRound = () => {
+    if (!energyData) return
+
+    // Get available countries (those with data)
+    const availableCountries = countryOptions.filter(country => energyData[country.code])
+    
     // Select 4 random countries for this round
-    const shuffled = [...countryOptions].sort(() => Math.random() - 0.5)
+    const shuffled = [...availableCountries].sort(() => Math.random() - 0.5)
     const roundOptions = shuffled.slice(0, 4)
 
     // Pick one as the correct answer
@@ -758,7 +124,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
 
     setCurrentCountryOptions(roundOptions)
     setCorrectCountry(correct)
-    setCurrentEnergyData(mockEnergyData[correct.zone] || mockEnergyData.GB)
+    setCurrentEnergyData(energyData[correct.code])
     setVisibleCharts(1)
     setSelectedCountry(null)
     setOpenAccordion("consumption")
@@ -789,7 +155,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
   const handleGuess = () => {
     if (!selectedCountry || !correctCountry) return
 
-    const isCorrect = selectedCountry === correctCountry.zone
+    const isCorrect = selectedCountry === correctCountry.code
     const pointsArray = [100, 75, 50, 25]
     const points = isCorrect ? pointsArray[visibleCharts - 1] || 0 : 0
 
@@ -812,24 +178,49 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
     }
   }
 
-  const createBarChartData = (data: { [key: string]: number }) => {
-    return Object.entries(data).map(([name, value]) => ({
-      name,
-      value,
-      fill: energyColors[name] || "#666",
-    }))
+  const createBarChartData = (data: EnergyConsumptionData) => {
+    return [
+      { name: 'Oil', value: data.oil, fill: energyColors.oil },
+      { name: 'Coal', value: data.coal, fill: energyColors.coal },
+      { name: 'Gas', value: data.gas, fill: energyColors.gas },
+      { name: 'Nuclear', value: data.nuclear, fill: energyColors.nuclear },
+      { name: 'Hydro', value: data.hydro, fill: energyColors.hydro },
+      { name: 'Wind', value: data.wind, fill: energyColors.wind },
+      { name: 'Solar', value: data.solar, fill: energyColors.solar },
+      { name: 'Biofuels', value: data.biofuels, fill: energyColors.biofuels },
+      { name: 'Other', value: data.other_renewables, fill: energyColors.other_renewables }
+    ]
   }
 
   const progress = ((currentRound + 1) / 5) * 100
 
-  if (!currentEnergyData || !correctCountry) {
-    return <div>Loading...</div>
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 pt-8 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-gray-700 mb-2">Loading Energy Data</h2>
+          <p className="text-gray-500">Fetching real energy statistics from Our World in Data...</p>
+        </div>
+      </div>
+    )
   }
 
-  const consumptionData = createBarChartData(currentEnergyData.energyConsumption2023)
-  const productionData = createBarChartData(currentEnergyData.electricityProduction2023)
-  const importsExportsData = currentEnergyData.energyImportsExports
-  const timeSeriesData = currentEnergyData.energyConsumptionTimeSeries
+  if (!currentEnergyData || !correctCountry) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 pt-8 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-700 mb-2">Game Loading</h2>
+          <p className="text-gray-500">Preparing your energy challenge...</p>
+        </div>
+      </div>
+    )
+  }
+
+  const consumptionData = createBarChartData(currentEnergyData)
+  const productionData = createBarChartData(currentEnergyData)
+  const importsExportsData: Array<{ year: number; value: number }> = []
+  const timeSeriesData: Array<{ year: number; [key: string]: number }> = []
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 pt-8">
@@ -906,10 +297,10 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                 <div className="grid grid-cols-2 gap-3">
                   {currentCountryOptions.map((country) => (
                     <button
-                      key={country.zone}
-                      onClick={() => setSelectedCountry(country.zone)}
+                      key={country.code}
+                      onClick={() => setSelectedCountry(country.code)}
                       className={`p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer ${
-                        selectedCountry === country.zone
+                        selectedCountry === country.code
                           ? "border-blue-500 bg-blue-50"
                           : "border-gray-200 hover:border-blue-300 hover:bg-blue-25"
                       }`}
@@ -1188,10 +579,10 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                           />
                           <Area
                             type="monotone"
-                            dataKey="other renewables"
+                            dataKey="other_renewables"
                             stackId="1"
-                            stroke={energyColors["other renewables"]}
-                            fill={energyColors["other renewables"]}
+                            stroke={energyColors.other_renewables}
+                            fill={energyColors.other_renewables}
                           />
                         </AreaChart>
                       </ResponsiveContainer>
