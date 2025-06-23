@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Github, Linkedin, Mail, Zap } from "lucide-react"
+import { ArrowLeft, Github, Linkedin, Zap } from "lucide-react"
 
 interface AboutPageProps {
   onBack: () => void
@@ -90,11 +90,11 @@ export default function AboutPage({ onBack }: AboutPageProps) {
                 <div className="flex-1 space-y-4">
                   <p className="text-muted-foreground leading-relaxed">
                     I started building this app in June 2025 in order to explore what was currently possible with AI coding tools such as v0 and Cursor. 
-                    These tools don't do everything for you, and my technical background from product & data science definitely helped in successful construction & deployment.
+                    These tools don&apos;t do everything for you, and my technical background from product & data science definitely helped in successful construction & deployment.
                     But I have still been astonished by the speed with which I was able to build a front-end, integrate with APIs & host the application. 
                   </p>
                   <p className="text-muted-foreground leading-relaxed">
-                    I combined my interests in the transition to renewable energy sources, online trivia games & data analysis to come up with the idea for this game. It's not just
+                    I combined my interests in the transition to renewable energy sources, online trivia games & data analysis to come up with the idea for this game. It&apos;s not just
                     a chance for me to explore new tools & build my skills, but also a chance to create something that I hope will be useful & interesting for others!
                   </p>
                 </div>
