@@ -5,9 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Trophy, RotateCcw, Home, Star, Target } from "lucide-react"
 
 interface ResultsScreenProps {
-  results: any[]
+  results: GameResult[]
   onPlayAgain: () => void
   onBackToWelcome: () => void
+}
+
+interface GameResult {
+  country: string
+  flag: string
+  isCorrect: boolean
+  points: number
+  chartsViewed: number
 }
 
 export default function ResultsScreen({ results, onPlayAgain, onBackToWelcome }: ResultsScreenProps) {

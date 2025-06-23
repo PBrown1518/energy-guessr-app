@@ -8,16 +8,24 @@ import GameScreen from "@/components/game-screen"
 import AboutPage from "@/components/about-page"
 import ResultsScreen from "@/components/results-screen"
 
+interface GameResult {
+  country: string
+  flag: string
+  isCorrect: boolean
+  points: number
+  chartsViewed: number
+}
+
 export default function EnergyGuessr() {
   const [currentScreen, setCurrentScreen] = useState<"welcome" | "game" | "about" | "results">("welcome")
-  const [gameResults, setGameResults] = useState<any[]>([])
+  const [gameResults, setGameResults] = useState<GameResult[]>([])
 
   const handleStartGame = () => {
     setCurrentScreen("game")
     setGameResults([])
   }
 
-  const handleGameComplete = (results: any[]) => {
+  const handleGameComplete = (results: GameResult[]) => {
     setGameResults(results)
     setCurrentScreen("results")
   }
@@ -53,6 +61,26 @@ export default function EnergyGuessr() {
           <p className="text-xl text-muted-foreground">Guess the country based on real global energy data!</p>
         </div>
 
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+          <Button
+            onClick={handleStartGame}
+            size="lg"
+            className="bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white px-8 py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+          >
+            <Zap className="mr-2 h-5 w-5" />
+            Start Game
+          </Button>
+          <Button
+            onClick={() => setCurrentScreen("about")}
+            variant="outline"
+            size="lg"
+            className="px-8 py-3 text-lg font-semibold border-2 hover:bg-gray-50"
+          >
+            <Info className="mr-2 h-5 w-5" />
+            About
+          </Button>
+        </div>
+
         <Card className="mb-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm">
           <CardHeader className="text-center">
             <CardTitle className="flex items-center justify-center gap-2 text-2xl">
@@ -73,7 +101,7 @@ export default function EnergyGuessr() {
                   <div>
                     <h3 className="font-semibold text-foreground">Choose Your Country</h3>
                     <p className="text-sm text-muted-foreground">
-                      You'll see 4 countries with flags. Pick which one matches the energy data shown.
+                      You&apos;ll see 4 countries with flags. Pick which one matches the energy data shown.
                     </p>
                   </div>
                 </div>
@@ -162,26 +190,6 @@ export default function EnergyGuessr() {
             </div>
           </CardContent>
         </Card>
-
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button
-            onClick={handleStartGame}
-            size="lg"
-            className="bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white px-8 py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
-          >
-            <Zap className="mr-2 h-5 w-5" />
-            Start Game
-          </Button>
-          <Button
-            onClick={() => setCurrentScreen("about")}
-            variant="outline"
-            size="lg"
-            className="px-8 py-3 text-lg font-semibold border-2 hover:bg-gray-50"
-          >
-            <Info className="mr-2 h-5 w-5" />
-            About
-          </Button>
-        </div>
       </div>
     </div>
   )

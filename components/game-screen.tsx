@@ -24,8 +24,16 @@ import { ChartTooltip } from "@/components/ui/chart"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface GameScreenProps {
-  onGameComplete: (results: any[]) => void
+  onGameComplete: (results: GameResult[]) => void
   onBackToWelcome: () => void
+}
+
+interface GameResult {
+  country: string
+  flag: string
+  isCorrect: boolean
+  points: number
+  chartsViewed: number
 }
 
 interface CountryOption {
@@ -733,7 +741,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
   const [currentEnergyData, setCurrentEnergyData] = useState<EnergyData | null>(null)
   const [visibleCharts, setVisibleCharts] = useState(1)
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
-  const [gameResults, setGameResults] = useState<any[]>([])
+  const [gameResults, setGameResults] = useState<GameResult[]>([])
   const [openAccordion, setOpenAccordion] = useState<string>("consumption")
 
   useEffect(() => {
@@ -761,6 +769,20 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
       setVisibleCharts(visibleCharts + 1)
       const accordionOrder = ["consumption", "production", "imports", "timeseries"]
       setOpenAccordion(accordionOrder[visibleCharts])
+      
+      // Auto-scroll to the newly revealed chart on mobile
+      setTimeout(() => {
+        const chartElements = document.querySelectorAll('[data-slot="accordion-item"]')
+        if (chartElements.length >= visibleCharts) {
+          const targetChart = chartElements[visibleCharts - 1] as HTMLElement
+          if (targetChart) {
+            targetChart.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' 
+            })
+          }
+        }
+      }, 300) // Longer delay to ensure accordion animation completes
     }
   }
 
@@ -771,14 +793,12 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
     const pointsArray = [100, 75, 50, 25]
     const points = isCorrect ? pointsArray[visibleCharts - 1] || 0 : 0
 
-    const roundResult = {
-      round: currentRound + 1,
-      correctCountry: correctCountry,
-      selectedCountry: currentCountryOptions.find((c) => c.zone === selectedCountry),
+    const roundResult: GameResult = {
+      country: correctCountry.name,
+      flag: correctCountry.flag,
       isCorrect,
       points,
       chartsViewed: visibleCharts,
-      energyData: currentEnergyData,
     }
 
     const newResults = [...gameResults, roundResult]
@@ -793,14 +813,11 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
   }
 
   const createBarChartData = (data: { [key: string]: number }) => {
-    return Object.entries(data)
-      .filter(([_, value]) => value > 0)
-      .sort(([, a], [, b]) => b - a)
-      .map(([key, value]) => ({
-        name: key,
-        value: value,
-        fill: energyColors[key] || "#808080",
-      }))
+    return Object.entries(data).map(([name, value]) => ({
+      name,
+      value,
+      fill: energyColors[name] || "#666",
+    }))
   }
 
   const progress = ((currentRound + 1) / 5) * 100
@@ -818,17 +835,46 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 p-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <Button variant="ghost" onClick={onBackToWelcome} className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Menu
-          </Button>
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-foreground">EnergyGuessr</h1>
-            <p className="text-muted-foreground">Round {currentRound + 1} of 5</p>
+        <div className="mb-6">
+          {/* Desktop Layout */}
+          <div className="hidden md:flex items-center justify-between">
+            <Button variant="ghost" onClick={onBackToWelcome} className="flex items-center gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Menu
+            </Button>
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-foreground">EnergyGuessr</h1>
+              <p className="text-muted-foreground">Round {currentRound + 1} of 5</p>
+            </div>
+            <div className="w-32">
+              <Progress value={progress} className="h-2" />
+            </div>
           </div>
-          <div className="w-32">
-            <Progress value={progress} className="h-2" />
+
+          {/* Mobile Layout */}
+          <div className="md:hidden space-y-4">
+            {/* Top row: Back button and Logo */}
+            <div className="flex items-center justify-between">
+              <Button variant="ghost" onClick={onBackToWelcome} className="p-2">
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <div className="flex items-center justify-center gap-3">
+                <div className="p-2 bg-gradient-to-r from-blue-500 to-green-500 rounded-full">
+                  <Zap className="h-6 w-6 text-white" />
+                </div>
+              </div>
+              <div className="w-10"></div> {/* Spacer for centering */}
+            </div>
+            
+            {/* Bottom row: Round indicator and Progress bar */}
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-medium text-foreground">
+                Round {currentRound + 1} of 5
+              </div>
+              <div className="flex-1 ml-4">
+                <Progress value={progress} className="h-2" />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -842,9 +888,9 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
           </CardHeader>
         </Card>
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-2 lg:gap-8 pb-24 md:pb-0">
           {/* Left Side - Country Options */}
-          <div className="space-y-6">
+          <div className="space-y-6 lg:space-y-6 space-y-4">
             <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle>Select a Country</CardTitle>
@@ -872,8 +918,8 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
               </CardContent>
             </Card>
 
-            {/* Action Buttons */}
-            <div className="space-y-3">
+            {/* Desktop Action Buttons */}
+            <div className="hidden md:block space-y-3">
               {visibleCharts < 4 && (
                 <Button onClick={handleRevealNext} variant="outline" className="w-full">
                   <Eye className="mr-2 h-4 w-4" />
@@ -892,7 +938,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
           </div>
 
           {/* Right Side - Energy Data Visualizations */}
-          <div className="space-y-4">
+          <div className="space-y-4 lg:space-y-4 space-y-2">
             <TooltipProvider>
               <Accordion type="single" value={openAccordion} onValueChange={setOpenAccordion}>
                 {/* Energy Consumption 2023 */}
@@ -911,7 +957,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                         <TooltipContent className="max-w-sm">
                           <p className="text-xs">
                             Measured in terms of primary energy using the substitution method. Data source: Energy
-                            Institute - Statistical Review of World Energy (2024). Note: "Other renewables" include
+                            Institute - Statistical Review of World Energy (2024). Note: &quot;Other renewables&quot; include
                             geothermal, biomass, and waste energy. OurWorldinData.org/energy | CC BY
                           </p>
                         </TooltipContent>
@@ -963,7 +1009,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                         <TooltipContent className="max-w-sm">
                           <p className="text-xs">
                             Measured in terawatt-hours. Data source: Ember (2025); Energy Institute - Statistical Review
-                            of World Energy (2024). Note: "Other renewables" include geothermal, wave, and tidal.
+                            of World Energy (2024). Note: &quot;Other renewables&quot; include geothermal, wave, and tidal.
                             OurWorldinData.org/energy | CC BY
                           </p>
                         </TooltipContent>
@@ -1065,7 +1111,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                         <TooltipContent className="max-w-sm">
                           <p className="text-xs">
                             Measured in terms of primary energy using the substitution method. Data source: Energy
-                            Institute - Statistical Review of World Energy (2024). Note: "Other renewables" include
+                            Institute - Statistical Review of World Energy (2024). Note: &quot;Other renewables&quot; include
                             geothermal, biomass, and waste energy. OurWorldinData.org/energy | CC BY
                           </p>
                         </TooltipContent>
@@ -1150,6 +1196,26 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                 </AccordionItem>
               </Accordion>
             </TooltipProvider>
+          </div>
+        </div>
+
+        {/* Mobile Sticky Action Buttons */}
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/60 backdrop-blur-sm border-t border-gray-200 p-4 z-50">
+          <div className="space-y-3">
+            {visibleCharts < 4 && (
+              <Button onClick={handleRevealNext} variant="outline" className="w-full">
+                <Eye className="mr-2 h-4 w-4" />
+                Reveal Next Chart ({[100, 75, 50, 25][visibleCharts]} points if correct)
+              </Button>
+            )}
+            <Button
+              onClick={handleGuess}
+              disabled={!selectedCountry}
+              className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white"
+            >
+              <CheckCircle className="mr-2 h-4 w-4" />
+              Make Guess ({[100, 75, 50, 25][visibleCharts - 1]} points if correct)
+            </Button>
           </div>
         </div>
       </div>
