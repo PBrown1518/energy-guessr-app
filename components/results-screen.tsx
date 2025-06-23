@@ -154,7 +154,7 @@ export default function ResultsScreen({ results, onPlayAgain, onBackToWelcome }:
     if (score >= 70) return "Great job! You have solid energy knowledge! 👍"
     if (score >= 60) return "Good effort! Keep learning about energy! 📚"
     if (score >= 50) return "Not bad! There's room for improvement! 💪"
-    return "Keep practicing! Energy knowledge takes time to build! 🎯"
+    return "Keep practising! Energy knowledge takes time to build! 🎯"
   }
 
   return (

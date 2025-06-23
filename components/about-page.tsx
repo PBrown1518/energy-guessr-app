@@ -37,6 +37,7 @@ export default function AboutPage({ onBack }: AboutPageProps) {
                 EnergyGuessr is an educational game designed to test and improve your knowledge of global energy
                 consumption patterns. By presenting real-world energy data from different countries, the game helps
                 players understand the diverse energy landscapes around the world.
+
               </p>
               <p className="text-muted-foreground leading-relaxed">
                 The game uses data sourced from Our World in Data, which provides comprehensive energy statistics
@@ -61,7 +62,6 @@ export default function AboutPage({ onBack }: AboutPageProps) {
                     <li>• React with TypeScript</li>
                     <li>• Tailwind CSS for styling</li>
                     <li>• Recharts for data visualisation</li>
-                    <li>• HTML5 Drag and Drop API</li>
                     <li>• shadcn/ui component library</li>
                   </ul>
                 </div>
@@ -89,14 +89,13 @@ export default function AboutPage({ onBack }: AboutPageProps) {
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="flex-1 space-y-4">
                   <p className="text-muted-foreground leading-relaxed">
-                    This game was created as an educational tool to promote awareness about global energy consumption
-                    and the transition to renewable energy sources. The developer is passionate about combining
-                    technology with environmental education to create engaging learning experiences.
+                    I started building this app in June 2025 in order to explore what was currently possible with AI coding tools such as v0 and Cursor. 
+                    These tools don't do everything for you, and my technical background from product & data science definitely helped in successful construction & deployment.
+                    But I have still been astonished by the speed with which I was able to build a front-end, integrate with APIs & host the application. 
                   </p>
                   <p className="text-muted-foreground leading-relaxed">
-                    The project demonstrates modern web development practices including responsive design, interactive
-                    user interfaces, and data visualisation techniques. It serves as both an educational game and a
-                    showcase of technical capabilities.
+                    I combined my interests in the transition to renewable energy sources, online trivia games & data analysis to come up with the idea for this game. It's not just
+                    a chance for me to explore new tools & build my skills, but also a chance to create something that I hope will be useful & interesting for others!
                   </p>
                 </div>
                 <div className="md:w-80">
@@ -105,15 +104,11 @@ export default function AboutPage({ onBack }: AboutPageProps) {
                     <div className="space-y-3">
                       <div className="flex items-center gap-3">
                         <Github className="h-5 w-5" />
-                        <span>github.com/yourusername</span>
+                        <span>github.com/PBrown1518</span>
                       </div>
                       <div className="flex items-center gap-3">
                         <Linkedin className="h-5 w-5" />
-                        <span>linkedin.com/in/yourprofile</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Mail className="h-5 w-5" />
-                        <span>your.email@example.com</span>
+                        <span>www.linkedin.com/in/patrick-brown-digital/</span>
                       </div>
                     </div>
                   </div>
