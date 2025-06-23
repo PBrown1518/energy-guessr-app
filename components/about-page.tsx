@@ -10,19 +10,20 @@ interface AboutPageProps {
 
 export default function AboutPage({ onBack }: AboutPageProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 p-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 pt-8">
+      <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <Button variant="ghost" onClick={onBack} className="p-3">
-            <ArrowLeft className="h-10 w-10" />
+        <div className="relative flex items-center justify-between mb-8">
+          <Button variant="ghost" onClick={onBack} className="p-3 z-10">
+            <ArrowLeft className="h-10 w-10 md:h-4 md:w-4" />
+            <span className="hidden md:inline ml-2">Back to Menu</span>
           </Button>
-          <div className="flex items-center justify-center gap-3">
+          <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center justify-center gap-3">
             <div className="p-3 bg-gradient-to-r from-blue-500 to-green-500 rounded-full">
               <Zap className="h-7 w-7 text-white" />
             </div>
           </div>
-          <div className="w-14"></div> {/* Spacer for centering */}
+          <div className="w-14 md:w-20"></div> {/* Spacer for centering */}
         </div>
 
         <div className="space-y-8">

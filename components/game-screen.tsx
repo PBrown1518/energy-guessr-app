@@ -832,22 +832,26 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
   const timeSeriesData = currentEnergyData.energyConsumptionTimeSeries
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 p-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 pt-8">
+      <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="mb-6">
           {/* Desktop Layout */}
           <div className="hidden md:flex items-center justify-between">
-            <Button variant="ghost" onClick={onBackToWelcome} className="flex items-center gap-2">
+            <Button variant="ghost" onClick={onBackToWelcome} className="flex items-center gap-2 z-10">
               <ArrowLeft className="h-4 w-4" />
               Back to Menu
             </Button>
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-foreground">EnergyGuessr</h1>
-              <p className="text-muted-foreground">Round {currentRound + 1} of 5</p>
+            <div className="absolute left-1/2 transform -translate-x-1/2 flex flex-col items-center justify-center gap-1">
+              <div className="p-3 bg-gradient-to-r from-blue-500 to-green-500 rounded-full">
+                <Zap className="h-7 w-7 text-white" />
+              </div>
             </div>
-            <div className="w-32">
-              <Progress value={progress} className="h-2" />
+            <div className="flex items-center gap-4">
+              <p className="text-sm text-muted-foreground">Round {currentRound + 1} of 5</p>
+              <div className="w-32">
+                <Progress value={progress} className="h-2" />
+              </div>
             </div>
           </div>
 

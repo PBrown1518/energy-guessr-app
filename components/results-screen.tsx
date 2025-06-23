@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Trophy, RotateCcw, Home, Star, Target } from "lucide-react"
+import { useEffect, useState } from "react"
 
 interface ResultsScreenProps {
   results: GameResult[]
@@ -16,6 +17,63 @@ interface GameResult {
   isCorrect: boolean
   points: number
   chartsViewed: number
+}
+
+// Firework component
+const Fireworks = () => {
+  const [fireworks, setFireworks] = useState<Array<{ id: number; x: number; y: number; color: string }>>([])
+
+  useEffect(() => {
+    const createFirework = () => {
+      const newFirework = {
+        id: Date.now(),
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight * 0.6,
+        color: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8'][Math.floor(Math.random() * 7)]
+      }
+      setFireworks(prev => [...prev, newFirework])
+      
+      // Remove firework after animation
+      setTimeout(() => {
+        setFireworks(prev => prev.filter(fw => fw.id !== newFirework.id))
+      }, 2000)
+    }
+
+    // Create fireworks at intervals
+    const interval = setInterval(createFirework, 300)
+    
+    // Stop creating fireworks after 5 seconds
+    const stopTimeout = setTimeout(() => {
+      clearInterval(interval)
+    }, 5000)
+
+    return () => {
+      clearInterval(interval)
+      clearTimeout(stopTimeout)
+    }
+  }, [])
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-50">
+      {fireworks.map((firework) => (
+        <div
+          key={firework.id}
+          className="absolute animate-ping"
+          style={{
+            left: firework.x,
+            top: firework.y,
+            animationDuration: '2s',
+            animationIterationCount: 1
+          }}
+        >
+          <div
+            className="w-4 h-4 rounded-full"
+            style={{ backgroundColor: firework.color }}
+          />
+        </div>
+      ))}
+    </div>
+  )
 }
 
 export default function ResultsScreen({ results, onPlayAgain, onBackToWelcome }: ResultsScreenProps) {
@@ -44,8 +102,11 @@ export default function ResultsScreen({ results, onPlayAgain, onBackToWelcome }:
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 p-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 pt-8 pb-8">
+      {/* Fireworks for perfect score */}
+      {totalScore === 500 && <Fireworks />}
+      
+      <div className="max-w-4xl mx-auto px-4 min-h-full">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
@@ -73,6 +134,27 @@ export default function ResultsScreen({ results, onPlayAgain, onBackToWelcome }:
             <p className={`text-lg font-semibold ${getScoreColor(averageScore)}`}>{getScoreMessage(averageScore)}</p>
           </CardContent>
         </Card>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+          <Button
+            onClick={onPlayAgain}
+            size="lg"
+            className="bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white px-8 py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+          >
+            <RotateCcw className="mr-2 h-5 w-5" />
+            Play Again
+          </Button>
+          <Button
+            onClick={onBackToWelcome}
+            variant="outline"
+            size="lg"
+            className="px-8 py-3 text-lg font-semibold border-2 hover:bg-gray-50"
+          >
+            <Home className="mr-2 h-5 w-5" />
+            Back to Menu
+          </Button>
+        </div>
 
         {/* Round by Round Results */}
         <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm mb-8">
@@ -129,27 +211,6 @@ export default function ResultsScreen({ results, onPlayAgain, onBackToWelcome }:
             </div>
           </CardContent>
         </Card>
-
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button
-            onClick={onPlayAgain}
-            size="lg"
-            className="bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white px-8 py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
-          >
-            <RotateCcw className="mr-2 h-5 w-5" />
-            Play Again
-          </Button>
-          <Button
-            onClick={onBackToWelcome}
-            variant="outline"
-            size="lg"
-            className="px-8 py-3 text-lg font-semibold border-2 hover:bg-gray-50"
-          >
-            <Home className="mr-2 h-5 w-5" />
-            Back to Menu
-          </Button>
-        </div>
       </div>
     </div>
   )
