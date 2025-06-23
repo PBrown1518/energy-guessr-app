@@ -35,6 +35,10 @@ interface GameResult {
   isCorrect: boolean
   points: number
   chartsViewed: number
+  playerGuess: string
+  playerGuessFlag: string
+  correctAnswer: string
+  correctAnswerFlag: string
 }
 
 interface CountryOption {
@@ -45,14 +49,11 @@ interface CountryOption {
 
 // Country flags mapping
 const COUNTRY_FLAGS: { [key: string]: string } = {
-  'USA': '🇺🇸', 'CHN': '🇨🇳', 'JPN': '🇯🇵', 'DEU': '🇩🇪', 'RUS': '🇷🇺', 'IND': '🇮🇳', 'CAN': '🇨🇦', 'FRA': '🇫🇷', 'ITA': '🇮🇹', 'GBR': '🇬🇧',
-  'SAU': '🇸🇦', 'BRA': '🇧🇷', 'MEX': '🇲🇽', 'KOR': '🇰🇷', 'ESP': '🇪🇸', 'IRN': '🇮🇷', 'IDN': '🇮🇩', 'NLD': '🇳🇱', 'AUS': '🇦🇺', 'SGP': '🇸🇬',
-  'TWN': '🇹🇼', 'THA': '🇹🇭', 'BEL': '🇧🇪', 'TUR': '🇹🇷', 'ARG': '🇦🇷', 'EGY': '🇪🇬', 'VEN': '🇻🇪', 'SWE': '🇸🇪', 'POL': '🇵🇱', 'ARE': '🇦🇪',
-  'MYS': '🇲🇾', 'ZAF': '🇿🇦', 'IRQ': '🇮🇶', 'UKR': '🇺🇦', 'GRC': '🇬🇷', 'PHL': '🇵🇭', 'PAK': '🇵🇰', 'ROU': '🇷🇴', 'CHE': '🇨🇭', 'AUT': '🇦🇹',
-  'COL': '🇨🇴', 'DNK': '🇩🇰', 'PRT': '🇵🇹', 'KWT': '🇰🇼', 'FIN': '🇫🇮', 'CHL': '🇨🇱', 'HKG': '🇭🇰', 'DZA': '🇩🇿', 'VNM': '🇻🇳', 'ISR': '🇮🇱',
-  'CZE': '🇨🇿', 'NOR': '🇳🇴', 'KAZ': '🇰🇿', 'BLR': '🇧🇾', 'HUN': '🇭🇺', 'BGR': '🇧🇬', 'PER': '🇵🇪', 'MAR': '🇲🇦', 'ECU': '🇪🇨', 'IRL': '🇮🇪',
-  'NZL': '🇳🇿', 'SVK': '🇸🇰', 'UZB': '🇺🇿', 'QAT': '🇶🇦', 'AZE': '🇦🇿', 'OMN': '🇴🇲', 'BGD': '🇧🇩', 'TKM': '🇹🇲', 'LKA': '🇱🇰', 'LTU': '🇱🇹',
-  'HRV': '🇭🇷', 'LUX': '🇱🇺', 'TTO': '🇹🇹', 'CYP': '🇨🇾', 'LVA': '🇱🇻', 'SVN': '🇸🇮', 'EST': '🇪🇪', 'ISL': '🇮🇸', 'MKD': '🇲🇰'
+  'USA': '🇺🇸', 'CHN': '🇨🇳', 'IND': '🇮🇳', 'RUS': '🇷🇺', 'DEU': '🇩🇪', 'FRA': '🇫🇷', 'JPN': '🇯🇵', 'BRA': '🇧🇷', 'CAN': '🇨🇦', 'SAU': '🇸🇦',
+  'NOR': '🇳🇴', 'GBR': '🇬🇧', 'AUS': '🇦🇺', 'ZAF': '🇿🇦', 'MEX': '🇲🇽', 'ARE': '🇦🇪', 'QAT': '🇶🇦', 'ISL': '🇮🇸', 'DNK': '🇩🇰', 'VNM': '🇻🇳',
+  'CHL': '🇨🇱', 'IDN': '🇮🇩', 'TUR': '🇹🇷', 'IRN': '🇮🇷', 'FIN': '🇫🇮', 'SWE': '🇸🇪', 'PAK': '🇵🇰', 'BGD': '🇧🇩', 'KOR': '🇰🇷', 'ITA': '🇮🇹',
+  'ESP': '🇪🇸', 'UKR': '🇺🇦', 'POL': '🇵🇱', 'NLD': '🇳🇱', 'BEL': '🇧🇪', 'GRC': '🇬🇷', 'PRT': '🇵🇹', 'MAR': '🇲🇦', 'DZA': '🇩🇿', 'EGY': '🇪🇬',
+  'KAZ': '🇰🇿', 'UZB': '🇺🇿', 'THA': '🇹🇭', 'MYS': '🇲🇾', 'PHL': '🇵🇭', 'NZL': '🇳🇿', 'ISR': '🇮🇱', 'COL': '🇨🇴'
 }
 
 const energyColors: { [key: string]: string } = {
@@ -90,6 +91,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
   const [isLoading, setIsLoading] = useState(true)
   const [energyData, setEnergyData] = useState<{ [countryCode: string]: CombinedEnergyData } | null>(null)
   const [showFireworks, setShowFireworks] = useState(false)
+  const [usedCorrectCountries, setUsedCorrectCountries] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     // Load energy data on component mount
@@ -117,10 +119,30 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
   const startNewRound = () => {
     if (!energyData) return
 
-    // Get available countries (those with data)
-    const availableCountries = countryOptions.filter(country => energyData[country.code])
+    // Get available countries (those with data) and exclude previously used correct countries
+    const availableCountries = countryOptions.filter(country => 
+      energyData[country.code] && !usedCorrectCountries.has(country.code)
+    )
     
-    // Select 4 random countries for this round
+    // If we don't have enough unused countries, reset the used countries set
+    if (availableCountries.length < 4) {
+      setUsedCorrectCountries(new Set())
+      // Re-filter without the used countries restriction
+      const allAvailableCountries = countryOptions.filter(country => energyData[country.code])
+      const shuffled = [...allAvailableCountries].sort(() => Math.random() - 0.5)
+      const roundOptions = shuffled.slice(0, 4)
+      const correct = roundOptions[Math.floor(Math.random() * 4)]
+      
+      setCurrentCountryOptions(roundOptions)
+      setCorrectCountry(correct)
+      setCurrentEnergyData(energyData[correct.code])
+      setVisibleCharts(1)
+      setSelectedCountry(null)
+      setOpenAccordion("consumption")
+      return
+    }
+    
+    // Select 4 random countries for this round from unused countries
     const shuffled = [...availableCountries].sort(() => Math.random() - 0.5)
     const roundOptions = shuffled.slice(0, 4)
 
@@ -164,16 +186,26 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
     const pointsArray = [100, 75, 50, 25]
     const points = isCorrect ? pointsArray[visibleCharts - 1] || 0 : 0
 
+    // Find the player's guessed country details
+    const playerGuessedCountry = countryOptions.find(c => c.code === selectedCountry)
+
     const roundResult: GameResult = {
-      country: correctCountry.name,
-      flag: correctCountry.flag,
+      country: playerGuessedCountry?.name || 'Unknown',
+      flag: playerGuessedCountry?.flag || '🏳️',
       isCorrect,
       points,
       chartsViewed: visibleCharts,
+      playerGuess: playerGuessedCountry?.name || 'Unknown',
+      playerGuessFlag: playerGuessedCountry?.flag || '🏳️',
+      correctAnswer: correctCountry.name,
+      correctAnswerFlag: correctCountry.flag,
     }
 
     const newResults = [...gameResults, roundResult]
     setGameResults(newResults)
+
+    // Add the current correct country to the used countries set
+    setUsedCorrectCountries(prev => new Set([...prev, correctCountry.code]))
 
     if (currentRound < 4) {
       setCurrentRound(currentRound + 1)
@@ -242,6 +274,28 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
     year: item.year,
     value: item.importPercentage
   }))
+  
+  // Calculate dynamic domain for imports/exports chart
+  const calculateImportsExportsDomain = () => {
+    if (importsExportsData.length === 0) return [-100, 100];
+    
+    const values = importsExportsData.map(item => item.value);
+    const minValue = Math.min(...values);
+    const maxValue = Math.max(...values);
+    
+    // Round to nearest 100 for cleaner axis
+    const roundedMin = Math.floor(minValue / 100) * 100;
+    const roundedMax = Math.ceil(maxValue / 100) * 100;
+    
+    // Ensure we have at least -100 to +100 range
+    const finalMin = Math.min(roundedMin, -100);
+    const finalMax = Math.max(roundedMax, 100);
+    
+    return [finalMin, finalMax];
+  };
+  
+  const importsExportsDomain = calculateImportsExportsDomain();
+
   const timeSeriesData = currentEnergyData.timeSeries.map(item => ({
     year: item.year,
     oil: item.oil,
@@ -403,7 +457,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                               if (active && payload && payload[0]) {
                                 return (
                                   <div className="bg-white p-2 border rounded shadow">
-                                    <p className="font-semibold">{`${payload[0].payload.name}: ${payload[0].value} TWh`}</p>
+                                    <p className="font-semibold">{`${payload[0].payload.name}: ${Math.round(payload[0].value)} TWh`}</p>
                                   </div>
                                 )
                               }
@@ -454,7 +508,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                               if (active && payload && payload[0]) {
                                 return (
                                   <div className="bg-white p-2 border rounded shadow">
-                                    <p className="font-semibold">{`${payload[0].payload.name}: ${payload[0].value} TWh`}</p>
+                                    <p className="font-semibold">{`${payload[0].payload.name}: ${Math.round(payload[0].value)} TWh`}</p>
                                   </div>
                                 )
                               }
@@ -501,15 +555,23 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                           <XAxis dataKey="year" />
                           <YAxis 
                             label={{ value: "Energy Trade %", angle: -90, position: "center", dx:-30 }}
-                            domain={[-100, 100]}
+                            domain={importsExportsDomain}
                             tickFormatter={(value) => `${value >= 0 ? '+' : ''}${value}%`}
+                            ticks={(() => {
+                              const [min, max] = importsExportsDomain;
+                              const ticks = [];
+                              for (let i = min; i <= max; i += 100) {
+                                ticks.push(i);
+                              }
+                              return ticks;
+                            })()}
                           />
                           <ChartTooltip
                             content={({ active, payload }) => {
                               if (active && payload && payload[0]) {
                                 return (
                                   <div className="bg-white p-2 border rounded shadow">
-                                    <p className="font-semibold">{`${payload[0].payload.year}: ${payload[0].value}%`}</p>
+                                    <p className="font-semibold">{`${payload[0].payload.year}: ${Math.round(payload[0].value)}%`}</p>
                                   </div>
                                 )
                               }
@@ -560,7 +622,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                                     <p className="font-semibold">{`Year: ${payload[0].payload.year}`}</p>
                                     {payload.map((entry, index) => (
                                       <p key={index} style={{ color: entry.color }}>
-                                        {`${entry.name}: ${entry.value} TWh`}
+                                        {`${entry.name}: ${Math.round(entry.value)} TWh`}
                                       </p>
                                     ))}
                                   </div>
