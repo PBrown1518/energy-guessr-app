@@ -230,6 +230,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
       setGameResults(newResults)
       setUsedCorrectCountries(newUsedCountries)
       setIsGuessing(false)
+      
       onGameComplete(newResults)
     }
   }

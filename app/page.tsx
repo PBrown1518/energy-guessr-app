@@ -1,12 +1,26 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Info, Zap, Target, BarChart3, TrendingUp, Clock } from "lucide-react"
 import GameScreen from "@/components/game-screen"
 import AboutPage from "@/components/about-page"
 import ResultsScreen from "@/components/results-screen"
+import { trackPageView, initAnalytics } from "@/lib/analytics"
+import { initializeApp } from 'firebase/app'
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCRb7u1WGakRWFYCdanp1PvOO3XR7F-F80",
+  authDomain: "energy-guessr-app.firebaseapp.com",
+  projectId: "energy-guessr-app",
+  storageBucket: "energy-guessr-app.firebasestorage.app",
+  messagingSenderId: "776522095712",
+  appId: "1:776522095712:web:39478ec8eefb006ca33705",
+  measurementId: "G-RNLZQV2HTX"
+};
+
+const app = initializeApp(firebaseConfig);
 
 interface GameResult {
   country: string
@@ -23,6 +37,14 @@ interface GameResult {
 export default function EnergyGuessr() {
   const [currentScreen, setCurrentScreen] = useState<"welcome" | "game" | "about" | "results">("welcome")
   const [gameResults, setGameResults] = useState<GameResult[]>([])
+
+  // Track page view on app load
+  useEffect(() => {
+    // Initialize analytics first
+    initAnalytics(app);
+    // Then track page view
+    trackPageView('EnergyGuessr Home');
+  }, [])
 
   const handleStartGame = () => {
     setCurrentScreen("game")
