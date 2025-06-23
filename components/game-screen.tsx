@@ -858,7 +858,7 @@ export default function GameScreen({ onGameComplete, onBackToWelcome }: GameScre
                     <button
                       key={country.zone}
                       onClick={() => setSelectedCountry(country.zone)}
-                      className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                      className={`p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer ${
                         selectedCountry === country.zone
                           ? "border-blue-500 bg-blue-50"
                           : "border-gray-200 hover:border-blue-300 hover:bg-blue-25"
