@@ -1,55 +1,43 @@
 # 🌍 EnergyGuessr
 
-An educational web game that challenges players to identify countries based on real global energy consumption data. Test your knowledge of energy patterns, renewable adoption, and energy policies across different nations!
+A simple educational web game that challenges players to identify countries based on real global energy data fetched from Our World in Data (OWID) APIs. Test your knowledge of energy patterns, renewable adoption, and energy policies across different nations!
 
 ![EnergyGuessr Game](https://img.shields.io/badge/Status-Live-brightgreen)
 ![Next.js](https://img.shields.io/badge/Next.js-15.2.4-black)
 ![React](https://img.shields.io/badge/React-19.0.0-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)
 
-## 🎯 About the Game
+## About the Game
+The main reason I built this game was to explore what was currently possible for a PM armed with AI development tools. I had heard impressive things about the likes of v0 and Cursor, so I wanted to see for myself. But I hoped that I could also make something that I (and perhaps others) would find interesting. So I combined my interests in global energy, data analysis & trivia games in order to come up with the concept for this game.
 
-EnergyGuessr is an interactive educational game designed to improve understanding of global energy consumption patterns. Players analyze real-world energy data visualizations to identify countries based on their unique energy profiles, learning about renewable energy adoption, fossil fuel dependency, and energy policy impacts across different nations.
+Players are challenged to guess the correct country using their data detective skills, and hopefully will learn sometihng about country energy profiles, fossil fuel dependency & energy policy along the way. Players can choose to reveal up to 4 visualisations to help with their decision, but they are rewarded for guessing early!
 
-### 🎮 How to Play
+### How to Play
 
 1. **Choose Your Country**: You'll see 4 countries with flags. Pick which one matches the energy data shown.
 2. **Analyze the Data**: Study up to 4 different energy visualizations to help make your decision.
 3. **Strategic Guessing**: Guess early for more points, or reveal more data for better accuracy.
 4. **Score Points**: Complete 5 rounds and maximize your score up to 500 points!
 
-### 🏆 Scoring System
+### Scoring System
 
 - **100 points**: After viewing 1 chart
 - **75 points**: After viewing 2 charts  
 - **50 points**: After viewing 3 charts
 - **25 points**: After viewing 4 charts
 
-## ✨ Features
-
-### 🎨 Interactive Gameplay
+## Features
 - **Multiple Choice Interface**: Choose from 4 countries with flag representations
 - **Progressive Data Revelation**: Unlock up to 4 energy visualizations per round
 - **Real-time Scoring**: Immediate feedback and point calculation
 - **Strategic Decision Making**: Balance speed vs. accuracy for optimal scoring
+- **Firework Celebrations**: Special animations for perfect scores (500 points)
 
-### 📊 Energy Data Visualizations
+### Energy Data Visualizations
 - **Energy Consumption 2023**: Primary energy consumption by source
 - **Electricity Production 2023**: Electricity generation by source
 - **Energy Imports & Exports**: Trade balance over time
 - **Energy Mix Over Time**: Historical energy consumption trends
-
-### 🎯 Educational Value
-- **Real Data**: Based on actual energy statistics from Our World in Data
-- **Global Perspective**: Covers 8 major European countries
-- **Environmental Awareness**: Promotes understanding of renewable energy adoption
-- **Policy Insights**: Learn about different energy strategies across nations
-
-### 🎆 Special Features
-- **Firework Celebrations**: Special animations for perfect scores (500 points)
-- **Responsive Design**: Optimized for desktop and mobile devices
-- **Smooth Animations**: Engaging user experience with modern UI/UX
-- **Performance Analysis**: Detailed breakdown of gameplay statistics
 
 ## 🚀 Getting Started
 
@@ -121,7 +109,6 @@ npm run lint
 
 ### Deployment
 - **Firebase**: Hosting and deployment platform
-- **Vercel**: Alternative deployment option
 
 ## 📁 Project Structure
 
@@ -170,28 +157,9 @@ The game uses real-world energy statistics from:
 - **Ember**: Electricity production data
 - **International Energy Agency (IEA)**: Energy trade and policy data
 
-### Countries Featured
-- 🇬🇧 Great Britain
-- 🇩🇪 Germany  
-- 🇫🇷 France
-- 🇪🇸 Spain
-- 🇮🇹 Italy
-- 🇳🇱 Netherlands
-- 🇳🇴 Norway
-- 🇸🇪 Sweden
-
-## 🎯 Educational Impact
-
-EnergyGuessr serves as both an engaging game and an educational tool:
-
-- **Environmental Awareness**: Promotes understanding of renewable energy adoption
-- **Global Perspective**: Highlights different energy strategies across nations
-- **Data Literacy**: Improves ability to interpret energy statistics
-- **Policy Understanding**: Shows the impact of energy policies on consumption patterns
-
 ## 🤝 Contributing
 
-We welcome contributions to improve EnergyGuessr! Here's how you can help:
+I welcome contributions & improvements to EnergyGuessr!
 
 ### Development Setup
 1. Fork the repository
@@ -201,20 +169,6 @@ We welcome contributions to improve EnergyGuessr! Here's how you can help:
 5. Push to the branch: `git push origin feature/amazing-feature`
 6. Open a Pull Request
 
-### Areas for Contribution
-- **New Countries**: Add more countries with their energy data
-- **Additional Visualizations**: Create new chart types
-- **Game Modes**: Implement different gameplay variations
-- **Accessibility**: Improve accessibility features
-- **Performance**: Optimize loading times and animations
-- **Documentation**: Enhance code documentation and guides
-
-### Code Style
-- Follow TypeScript best practices
-- Use consistent formatting with ESLint
-- Write meaningful commit messages
-- Include tests for new features
-
 ## 🙏 Acknowledgments
 
 ### Data Sources
@@ -222,22 +176,3 @@ We welcome contributions to improve EnergyGuessr! Here's how you can help:
 - **Energy Institute** for the Statistical Review of World Energy (2024)
 - **Ember** for electricity production data
 - **International Energy Agency (IEA)** and **OECD** for energy trade data
-
-### Open Source Community
-- **Next.js** team for the amazing React framework
-- **Tailwind CSS** for the utility-first styling approach
-- **Recharts** for the powerful charting library
-- **shadcn/ui** for the beautiful component library
-- **Lucide** for the comprehensive icon set
-
-### Special Thanks
-- The open-source community for providing amazing tools and libraries
-- Energy researchers and organizations for making data publicly available
-- Beta testers and early users for valuable feedback
-
----
-
-<div align="center">
-  <p>Made with ❤️ for environmental education</p>
-  <p>Play EnergyGuessr and learn about global energy patterns!</p>
-</div>
